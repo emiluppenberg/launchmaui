@@ -1,6 +1,4 @@
 ﻿using System.Text.Json;
-using launchclient.Api;
-using launchclient.Client;
 using Microsoft.Extensions.Logging;
 
 namespace launchmaui;
