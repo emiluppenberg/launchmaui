@@ -5,6 +5,9 @@
 		When specifying both architectures, use the plural <RuntimeIdentifiers> instead of the singular <RuntimeIdentifier>.
 		The Mac App Store will NOT accept apps with ONLY maccatalyst-arm64 indicated;
 		either BOTH runtimes must be indicated or ONLY macatalyst-x64. --><!-- For example: <RuntimeIdentifiers>maccatalyst-x64;maccatalyst-arm64</RuntimeIdentifiers> -->
+		<InvariantGlobalization>true</InvariantGlobalization>
+		<PublishTrimmed>false</PublishTrimmed>
+		<PublishReadyToRun>false</PublishReadyToRun>
 		<OutputType>Exe</OutputType>
 		<RootNamespace>launchmaui</RootNamespace>
 		<UseMaui>true</UseMaui>
@@ -32,7 +35,8 @@
 		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)"/>
 	</ItemGroup>
 	<ItemGroup>
-		<ProjectReference Include="..\launchclient\src\launchclient\launchclient.csproj"/>
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0"/>
+		<ProjectReference Include="..\launchmauiclient\src\launchmauiclient\launchmauiclient.csproj"/>
 		<PackageReference Include="Microsoft.Extensions.Http.Polly" Version="10.0.1"/><!-- <PackageReference Include="Microsoft.Maui.Controls" Version="9.0.1"/> -->
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.1"/>
 		<PackageReference Include="Polly" Version="8.6.5"/>

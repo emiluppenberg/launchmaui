@@ -1,19 +1,12 @@
-﻿using launchclient.Api;
+﻿using launchmaui.VM;
 
 namespace launchmaui;
 
 public partial class MainPage : ContentPage
 {
-	private readonly ILaunchesApi launchesApi;
-
-	public MainPage(ILaunchesApi launchesApi)
+	public MainPage(MainVM vm)
 	{
 		InitializeComponent();
-		this.launchesApi = launchesApi;
-	}
-
-	public async void GetLaunches(object sender, EventArgs e)
-	{
-		var launches = await launchesApi.LaunchesListAsync();
+		BindingContext = vm;
 	}
 }
