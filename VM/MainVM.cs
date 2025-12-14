@@ -5,7 +5,6 @@ using CommunityToolkit.Mvvm.Input;
 using launchmaui.Utilities;
 using launchmaui.VM.Items;
 using launchmauiclient.Api;
-using launchmauiclient.Model;
 
 namespace launchmaui.VM;
 
@@ -25,7 +24,7 @@ public partial class MainVM : BaseVM
     });
   }
 
-  private CancellationTokenSource? currentCts;
+  private CancellationTokenSource currentCts = new CancellationTokenSource();
   private readonly ILaunchesApi _launchesApi;
 
   [ObservableProperty]
@@ -49,15 +48,9 @@ public partial class MainVM : BaseVM
     OnPropertyChanged(nameof(HasNextPage));
     OnPropertyChanged(nameof(HasPreviousPage));
 
-    Task.Run(async () =>
+    _ = Task.Run(async () =>
     {
       await NewRequestAsync();
-    }).ContinueWith(t =>
-    {
-      if (t.IsFaulted)
-      {
-        Debug.WriteLine($"MainVM error: {t.Exception?.InnerException?.Message}");
-      }
     });
   }
 
@@ -69,53 +62,59 @@ public partial class MainVM : BaseVM
 
   private async Task NewRequestAsync()
   {
-    currentCts?.Cancel();
+    currentCts.Cancel();
     currentCts = new CancellationTokenSource();
     var ct = currentCts.Token;
 
-    await Task.Run(async () =>
+    _ = _launchesApi.LaunchesUpcomingListAsync(offset: Offset, cancellationToken: ct)
+      .ContinueWith(HandleApiCall, TaskScheduler.Default);
+  }
+
+  private async void HandleApiCall(Task<ILaunchesUpcomingListApiResponse> task)
+  {
+    if (task.IsFaulted)
     {
-      try
+      Debug.WriteLine($"Error: {task.Exception?.InnerException?.Message}");
+      return;
+    }
+    if (task.IsCanceled)
+    {
+      Debug.WriteLine($"Request canceled (if task...): {task.Exception?.InnerException?.Message}");
+      return;
+    }
+
+    var sw = Stopwatch.StartNew();
+
+    var response = task.Result;
+    if (response is null || !response.IsOk) return;
+    var list = response.Ok()!;
+
+    sw.Stop();
+    Debug.WriteLine($"Elapsed1: {sw.ElapsedMilliseconds}");
+
+    sw = Stopwatch.StartNew();
+
+    var vms = new List<LaunchVM>();
+    foreach (var r in list.Results)
+    {
+      if (r.LaunchNormal is null)
       {
-        Launches.Clear();
-
-        var response = await _launchesApi.LaunchesUpcomingListAsync(offset: Offset, cancellationToken: ct);
-        if (response is null || !response.IsOk) return;
-        var list = response.Ok()!;
-
-        var pagesCount = (int)Math.Ceiling(list.Count / 10.0);
-        Pages = Enumerable.Range(1, pagesCount).ToArray();
-        OnPropertyChanged(nameof(HasNextPage));
-        OnPropertyChanged(nameof(HasPreviousPage));
-
-        var vms = new List<LaunchVM>();
-        foreach (var r in list.Results)
-        {
-          ct.ThrowIfCancellationRequested();
-
-          if (r.LaunchNormal is null)
-          {
-            continue;
-          }
-
-          var vm = new LaunchVM(r.LaunchNormal.Id, r.LaunchNormal.Name, r.LaunchNormal.WindowStart, r.LaunchNormal.WindowEnd, r.LaunchNormal.Image?.ImageUrl, LaunchTypes.Basic);
-          vms.Add(vm);
-        }
-
-        await MainThread.InvokeOnMainThreadAsync(() =>
-              {
-                Launches.Clear();
-                vms.ForEach(vm => Launches.Add(vm));
-              });
+        continue;
       }
-      catch (OperationCanceledException ex)
-      {
-        Debug.WriteLine($"Request canceled: {ex.Message}");
-      }
-      catch (Exception ex)
-      {
-        Debug.WriteLine("MainVM error: ", ex.Message);
-      }
-    });
+
+      var vm = new LaunchVM(r.LaunchNormal.Id, r.LaunchNormal.Name, r.LaunchNormal.WindowStart, r.LaunchNormal.WindowEnd, r.LaunchNormal.Image?.ImageUrl, LaunchTypes.Basic);
+      vms.Add(vm);
+    }
+
+    currentCts.Token.ThrowIfCancellationRequested();
+
+    var pagesCount = (int)Math.Ceiling(list.Count / 10.0);
+    Pages = Enumerable.Range(1, pagesCount).ToArray();
+    OnPropertyChanged(nameof(HasNextPage));
+    OnPropertyChanged(nameof(HasPreviousPage));
+    Launches = new ObservableCollection<LaunchVM>(vms);
+
+    sw.Stop();
+    Debug.WriteLine($"Elapsed2: {sw.ElapsedMilliseconds}");
   }
 }
