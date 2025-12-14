@@ -6,24 +6,44 @@
     xmlns:items="clr-namespace:launchmaui.VM.Items"
     xmlns:utilities="clr-namespace:launchmaui.Utilities"
     xmlns:vm="clr-namespace:launchmaui.VM"
-    Title="{Binding Title}"
     x:DataType="vm:MainVM">
+    <ContentPage.Resources>
+        <utilities:GreaterThanZeroConverter x:Key="GreaterThanZeroConverter" />
+    </ContentPage.Resources>
     <ScrollView>
         <VerticalStackLayout Padding="30,0" Spacing="25">
-            <Image
-                Aspect="AspectFit"
-                HeightRequest="185"
-                SemanticProperties.Description="dot net bot in a hovercraft number nine"
-                Source="dotnet_bot.png" />
+            <FlexLayout
+                AlignItems="Center"
+                Direction="Row"
+                JustifyContent="SpaceBetween"
+                Wrap="NoWrap">
+                <Button
+                    Margin="5"
+                    Command="{Binding PreviousPageCommand}"
+                    IsEnabled="{Binding HasPreviousPage}"
+                    Text="Previous"
+                    WidthRequest="100" />
+                <Picker
+                    Title="Select Page"
+                    HorizontalOptions="Center"
+                    HorizontalTextAlignment="Center"
+                    ItemsSource="{Binding Pages}"
+                    SelectedItem="{Binding Page, Mode=TwoWay}"
+                    WidthRequest="100" />
+                <Button
+                    Margin="5"
+                    Command="{Binding NextPageCommand}"
+                    IsEnabled="{Binding HasNextPage}"
+                    Text="Next"
+                    WidthRequest="100" />
+            </FlexLayout>
 
-            <Button
-                Command="{Binding GetLaunchesCommand}"
-                HorizontalOptions="Fill"
-                Text="Refresh launches" />
-
-            <CollectionView ItemsSource="{Binding Endpoints}">
+            <CollectionView
+                ItemSizingStrategy="MeasureFirstItem"
+                ItemsSource="{Binding Launches}"
+                ItemsUpdatingScrollMode="KeepItemsInView">
                 <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="items:LaunchEndpointVM">
+                    <DataTemplate x:DataType="items:LaunchVM">
                         <Border
                             Margin="5"
                             Padding="5"
@@ -33,11 +53,35 @@
                                     FontAttributes="Bold"
                                     FontSize="14"
                                     Text="{Binding DisplayName}" />
-                                <Image HeightRequest="100">
-                                    <Image.Source>
-                                        <UriImageSource Uri="{Binding ImageUrl}" />
-                                    </Image.Source>
-                                </Image>
+                                <FlexLayout
+                                    AlignItems="Center"
+                                    Direction="Row"
+                                    JustifyContent="SpaceBetween"
+                                    Wrap="NoWrap">
+                                    <Label
+                                        FontAttributes="Italic"
+                                        FontSize="14"
+                                        Text="{Binding WindowStart}" />
+                                    <Label
+                                        FontAttributes="Bold"
+                                        FontSize="14"
+                                        Text=" - " />
+                                    <Label
+                                        FontAttributes="Italic"
+                                        FontSize="14"
+                                        Text="{Binding WindowEnd}" />
+                                </FlexLayout>
+                                <Grid>
+                                    <Image HeightRequest="100" Source="fallback.jpg" />
+                                    <Image
+                                        Aspect="AspectFill"
+                                        HeightRequest="100"
+                                        WidthRequest="100">
+                                        <Image.Source>
+                                            <UriImageSource Uri="{Binding ImageUrl}" />
+                                        </Image.Source>
+                                    </Image>
+                                </Grid>
                             </VerticalStackLayout>
                         </Border>
                     </DataTemplate>

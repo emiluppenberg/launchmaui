@@ -3,7 +3,7 @@ using launchmaui.Utilities;
 
 namespace launchmaui.VM.Items;
 
-public partial class LaunchEndpointVM(Guid id, string? name, string url, LaunchTypes launchType) : BaseVM
+public partial class LaunchVM(Guid id, string? name, DateTime? windowStart, DateTime? windowEnd, string? url, LaunchTypes launchType) : BaseVM
 {
   [ObservableProperty]
   string id = id.ToString();
@@ -12,7 +12,13 @@ public partial class LaunchEndpointVM(Guid id, string? name, string url, LaunchT
   string displayName = name is not null ? name : id.ToString();
 
   [ObservableProperty]
-  string imageUrl = url;
+  DateTime? windowStart = windowStart;
+
+  [ObservableProperty]
+  DateTime? windowEnd = windowEnd;
+
+  [ObservableProperty]
+  string imageUrl = url is not null ? url : "";
 
   [ObservableProperty]
   LaunchTypes launchType = launchType;

@@ -2,7 +2,6 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using launchmaui.Services;
 using launchmaui.Utilities;
 using launchmaui.VM.Items;
 using launchmauiclient.Api;
@@ -12,77 +11,111 @@ namespace launchmaui.VM;
 
 public partial class MainVM : BaseVM
 {
-  public MainVM(ILaunchesApi launchesApi, ImageValidationService imageValidationService)
+  public MainVM(ILaunchesApi launchesApi)
   {
     this._launchesApi = launchesApi;
-    this.imageValidationService = imageValidationService;
     this.Title = "All launches";
+
+    _ = NewRequestAsync().ContinueWith(t =>
+    {
+      if (t.IsFaulted)
+      {
+        Debug.WriteLine($"MainVM error: {t.Exception?.InnerException?.Message}");
+      }
+    });
   }
 
+  private CancellationTokenSource? currentCts;
   private readonly ILaunchesApi _launchesApi;
-  private readonly ImageValidationService imageValidationService;
 
   [ObservableProperty]
-  ObservableCollection<LaunchEndpointVM> endpoints = new();
+  ObservableCollection<LaunchVM> launches = new();
 
   [ObservableProperty]
-  ObservableCollection<LaunchBasic> launchBasicCache = new();
+  Array pages = new int[1];
 
   [ObservableProperty]
-  ObservableCollection<LaunchNormal> launchNormalCache = new();
+  int offset;
 
   [ObservableProperty]
-  ObservableCollection<LaunchDetailed> launchDetailedCache = new();
+  int page = 1;
+
+  public bool HasNextPage => Page < Pages.Length;
+  public bool HasPreviousPage => Page > 1;
+
+  partial void OnPageChanged(int value)
+  {
+    Offset = (value - 1) * 10;
+    OnPropertyChanged(nameof(HasNextPage));
+    OnPropertyChanged(nameof(HasPreviousPage));
+
+    Task.Run(async () =>
+    {
+      await NewRequestAsync();
+    }).ContinueWith(t =>
+    {
+      if (t.IsFaulted)
+      {
+        Debug.WriteLine($"MainVM error: {t.Exception?.InnerException?.Message}");
+      }
+    });
+  }
 
   [RelayCommand]
-  async Task GetLaunches()
+  void NextPage() => Page += 1;
+
+  [RelayCommand]
+  void PreviousPage() => Page -= 1;
+
+  private async Task NewRequestAsync()
   {
-    try
+    currentCts?.Cancel();
+    currentCts = new CancellationTokenSource();
+    var ct = currentCts.Token;
+
+    await Task.Run(async () =>
     {
-      var launches = await _launchesApi.LaunchesListAsync();
-      if (!launches.IsOk) return;
-      var list = launches.Ok()!;
-
-      LaunchBasicCache.Clear();
-      LaunchNormalCache.Clear();
-      LaunchDetailedCache.Clear();
-      Endpoints.Clear();
-
-      var stopwatch = Stopwatch.StartNew();
-      foreach (var r in list.Results)
+      try
       {
-        if (r.LaunchBasic is not null)
-        {
-          var imageUrl = await this.imageValidationService.ValidateImageUrl(r.LaunchBasic.Image?.ImageUrl);
-          var vm = new LaunchEndpointVM(r.LaunchBasic.Id, r.LaunchBasic.Name, imageUrl, LaunchTypes.Basic);
+        Launches.Clear();
 
-          Endpoints.Add(vm);
-          LaunchBasicCache.Add(r.LaunchBasic);
-        }
-        if (r.LaunchNormal is not null)
-        {
-          var imageUrl = await this.imageValidationService.ValidateImageUrl(r.LaunchNormal.Image?.ImageUrl);
-          var vm = new LaunchEndpointVM(r.LaunchNormal.Id, r.LaunchNormal.Name, imageUrl, LaunchTypes.Basic);
+        var response = await _launchesApi.LaunchesUpcomingListAsync(offset: Offset, cancellationToken: ct);
+        if (response is null || !response.IsOk) return;
+        var list = response.Ok()!;
 
-          Endpoints.Add(vm);
-          LaunchNormalCache.Add(r.LaunchNormal);
-        }
-        if (r.LaunchDetailed is not null)
-        {
-          var imageUrl = await this.imageValidationService.ValidateImageUrl(r.LaunchDetailed.Image?.ImageUrl);
-          var vm = new LaunchEndpointVM(r.LaunchDetailed.Id, r.LaunchDetailed.Name, imageUrl, LaunchTypes.Basic);
+        var pagesCount = (int)Math.Ceiling(list.Count / 10.0);
+        Pages = Enumerable.Range(1, pagesCount).ToArray();
+        OnPropertyChanged(nameof(HasNextPage));
+        OnPropertyChanged(nameof(HasPreviousPage));
 
-          Endpoints.Add(vm);
-          LaunchDetailedCache.Add(r.LaunchDetailed);
+        var vms = new List<LaunchVM>();
+        foreach (var r in list.Results)
+        {
+          ct.ThrowIfCancellationRequested();
+
+          if (r.LaunchNormal is null)
+          {
+            continue;
+          }
+
+          var vm = new LaunchVM(r.LaunchNormal.Id, r.LaunchNormal.Name, r.LaunchNormal.WindowStart, r.LaunchNormal.WindowEnd, r.LaunchNormal.Image?.ImageUrl, LaunchTypes.Basic);
+          vms.Add(vm);
         }
+
+        await MainThread.InvokeOnMainThreadAsync(() =>
+              {
+                Launches.Clear();
+                vms.ForEach(vm => Launches.Add(vm));
+              });
       }
-      stopwatch.Stop();
-
-      Debug.WriteLine($"Elapsed: {stopwatch.ElapsedMilliseconds}");
-    }
-    catch (Exception ex)
-    {
-      Debug.WriteLine(ex.Message);
-    }
+      catch (OperationCanceledException ex)
+      {
+        Debug.WriteLine($"Request canceled: {ex.Message}");
+      }
+      catch (Exception ex)
+      {
+        Debug.WriteLine("MainVM error: ", ex.Message);
+      }
+    });
   }
 }

@@ -60,6 +60,11 @@ public static class MauiProgram
 			client.BaseAddress = new Uri(ClientUtils.BASE_ADDRESS);
 			client.Timeout = TimeSpan.FromSeconds(10);
 		});
+		builder.Services.AddHttpClient<MainVM>(client =>
+		{
+			client.BaseAddress = new Uri(ClientUtils.BASE_ADDRESS);
+			client.Timeout = TimeSpan.FromSeconds(10);
+		});
 		builder.Services.AddHttpClient<ImageValidationService>();
 
 		builder.Services.AddSingleton<MainVM>();
