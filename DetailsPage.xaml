@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+  x:Class="launchmaui.DetailsPage"
+  xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+  xmlns:items="clr-namespace:launchmaui.VM.Items"
+  xmlns:utilities="clr-namespace:launchmaui.Utilities"
+  xmlns:vm="clr-namespace:launchmaui.VM"
+  x:DataType="vm:DetailsVM">
+  <ScrollView>
+    <VerticalStackLayout Padding="30" Spacing="25">
+      <Button
+        Margin="5"
+        Command="{Binding GoToMainCommand}"
+        Text="Back to main"
+        WidthRequest="100" />
+    </VerticalStackLayout>
+  </ScrollView>
+</ContentPage>

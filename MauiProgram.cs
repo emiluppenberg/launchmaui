@@ -1,12 +1,10 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
-using launchmauiclient.Api;
-using launchmauiclient.Client;
-using launchmauiclient.Model;
+using launchapi.Api;
+using launchapi.Client;
 using launchmaui.VM;
 using Microsoft.Extensions.Logging;
-using System.Diagnostics;
-using launchmaui.Services;
+using System.Reflection;
 
 namespace launchmaui;
 
@@ -27,47 +25,43 @@ public static class MauiProgram
 				DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
 			};
 
-			var assembly = typeof(PaginatedPolymorphicLaunchEndpointListJsonConverter).Assembly;
+			var assembly = Assembly.Load("launchapi");
 			var converters = assembly
 				.GetTypes()
 				.Where(t => t.FullName!.EndsWith("JsonConverter"))
 				.ToList();
 
+			var launchDetailed = Type.GetType("launchapi.Model.LaunchDetailedJsonConverter, launchapi");
+			converters.Add(launchDetailed!);
+
 			foreach (var c in converters)
 			{
-				try
+				var jsonConverter = Activator.CreateInstance(c) as JsonConverter;
+				if (jsonConverter is not null)
 				{
-					var jsonConverter = Activator.CreateInstance(c) as JsonConverter;
-					if (jsonConverter is not null)
-					{
-						options.Converters.Add(jsonConverter);
-					}
-				}
-				catch (Exception ex)
-				{
-					Debug.WriteLine(ex.Message);
+					options.Converters.Add(jsonConverter);
 				}
 			}
 
 			return options;
 		});
 
-		builder.Services.AddSingleton<JsonSerializerOptionsProvider>();
+		builder.Services.AddSingleton<JsonSerializerOptionsProvider>(sp =>
+		{
+			var jsonOptions = sp.GetRequiredService<JsonSerializerOptions>();
+			return new JsonSerializerOptionsProvider(jsonOptions);
+		});
+
 		builder.Services.AddSingleton<LaunchesApiEvents>();
 
 		builder.Services.AddHttpClient<ILaunchesApi, LaunchesApi>(client =>
 		{
 			client.BaseAddress = new Uri(ClientUtils.BASE_ADDRESS);
-			client.Timeout = TimeSpan.FromSeconds(10);
+			client.Timeout = TimeSpan.FromMinutes(1);
 		});
-		builder.Services.AddHttpClient<MainVM>(client =>
-		{
-			client.BaseAddress = new Uri(ClientUtils.BASE_ADDRESS);
-			client.Timeout = TimeSpan.FromSeconds(10);
-		});
-		builder.Services.AddHttpClient<ImageValidationService>();
 
 		builder.Services.AddSingleton<MainVM>();
+		builder.Services.AddSingleton<DetailsVM>();
 
 		builder
 			.UseMauiApp<App>()

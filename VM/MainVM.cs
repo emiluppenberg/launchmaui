@@ -4,7 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using launchmaui.Utilities;
 using launchmaui.VM.Items;
-using launchmauiclient.Api;
+using launchapi.Api;
 
 namespace launchmaui.VM;
 
@@ -12,10 +12,11 @@ public partial class MainVM : BaseVM
 {
   public MainVM(ILaunchesApi launchesApi)
   {
-    this._launchesApi = launchesApi;
     this.Title = "All launches";
 
-    _ = NewRequestAsync().ContinueWith(t =>
+    this._launchesApi = launchesApi;
+
+    _ = NewPageRequestAsync().ContinueWith(t =>
     {
       if (t.IsFaulted)
       {
@@ -50,7 +51,7 @@ public partial class MainVM : BaseVM
 
     _ = Task.Run(async () =>
     {
-      await NewRequestAsync();
+      await NewPageRequestAsync();
     });
   }
 
@@ -60,17 +61,53 @@ public partial class MainVM : BaseVM
   [RelayCommand]
   void PreviousPage() => Page -= 1;
 
-  private async Task NewRequestAsync()
+  [RelayCommand]
+  async Task GoToDetails(string id)
+  {
+    currentCts.Cancel();
+    currentCts = new CancellationTokenSource();
+    var ct = currentCts.Token;
+
+    try
+    {
+      var response = await _launchesApi.LaunchesUpcomingRetrieveOrDefaultAsync(new Guid(id));
+      if (response is null || !response.IsOk) return;
+
+      var sw = Stopwatch.StartNew();
+      var details = response.Ok();
+      sw.Stop();
+      Debug.WriteLine($"elapsed auto: {sw.ElapsedMilliseconds}");
+
+      sw = Stopwatch.StartNew();
+      var _details = LaunchDetailsVM.CreateFromJson(response.RawContent);
+      sw.Stop();
+      Debug.WriteLine($"elapsed manual: {sw.ElapsedMilliseconds}");
+
+      // var details = response.Ok();
+      // if (details is not null)
+      // {
+      //   // responseRawContent = null;
+      //   // var query = new Dictionary<string, object> { { "Launch", details } };
+      //   // await Shell.Current.GoToAsync($"{nameof(DetailsPage)}", true, query);
+      // }
+    }
+    catch (Exception ex)
+    {
+      Debug.WriteLine($"Error retrieving: {ex.GetType().FullName} {ex.Message}, {ex.InnerException?.Message}");
+    }
+  }
+
+  private async Task NewPageRequestAsync()
   {
     currentCts.Cancel();
     currentCts = new CancellationTokenSource();
     var ct = currentCts.Token;
 
     _ = _launchesApi.LaunchesUpcomingListAsync(offset: Offset, cancellationToken: ct)
-      .ContinueWith(HandleApiCall, TaskScheduler.Default);
+      .ContinueWith(HandlePageRequest, TaskScheduler.Default);
   }
 
-  private async void HandleApiCall(Task<ILaunchesUpcomingListApiResponse> task)
+  private async void HandlePageRequest(Task<ILaunchesUpcomingListApiResponse> task)
   {
     if (task.IsFaulted)
     {
@@ -102,7 +139,7 @@ public partial class MainVM : BaseVM
         continue;
       }
 
-      var vm = new LaunchVM(r.LaunchNormal.Id, r.LaunchNormal.Name, r.LaunchNormal.WindowStart, r.LaunchNormal.WindowEnd, r.LaunchNormal.Image?.ImageUrl, LaunchTypes.Basic);
+      var vm = new LaunchVM(r.LaunchNormal.Id, r.LaunchNormal.Name, r.LaunchNormal.WindowStart, r.LaunchNormal.WindowEnd, r.LaunchNormal.Image?.ThumbnailUrl, LaunchTypes.Basic);
       vms.Add(vm);
     }
 

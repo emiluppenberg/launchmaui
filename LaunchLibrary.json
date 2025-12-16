@@ -15077,7 +15077,8 @@
             "maxLength": 2048
           },
           "location": {
-            "$ref": "#/components/schemas/LocationSerializerNoCelestialBody"
+            "$ref": "#/components/schemas/LocationSerializerNoCelestialBody",
+            "nullable": true
           },
           "longitude": {
             "type": "number",
@@ -15119,7 +15120,7 @@
             "$ref": "#/components/schemas/CelestialBodyNormal"
           }
         },
-        "required": ["celestial_body", "id", "image", "location"]
+        "required": ["celestial_body", "id", "image"]
       },
       "LandingType": {
         "type": "object",

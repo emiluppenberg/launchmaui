@@ -47,7 +47,16 @@
                         <Border
                             Margin="5"
                             Padding="5"
-                            HeightRequest="125">
+                            Background="White"
+                            HeightRequest="125"
+                            Stroke="Black"
+                            StrokeShape="RoundRectangle 10">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer
+                                    Command="{Binding BindingContext.GoToDetailsCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
+                                    CommandParameter="{Binding Id}"
+                                    NumberOfTapsRequired="1" />
+                            </Border.GestureRecognizers>
                             <VerticalStackLayout>
                                 <Label
                                     FontAttributes="Bold"
@@ -72,6 +81,7 @@
                                         Text="{Binding WindowEnd}" />
                                 </FlexLayout>
                                 <Grid>
+
                                     <Image HeightRequest="100" Source="fallback.jpg" />
                                     <Image
                                         Aspect="AspectFill"
