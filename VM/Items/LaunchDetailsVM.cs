@@ -98,34 +98,43 @@ public partial class LaunchDetailsVM : BaseVM
   public static LaunchDetailsVM CreateFromJson(string rawContent)
   {
     var model = new Dictionary<string, Dictionary<string, object?>>();
-    var currentLineage = new List<string>() { "Model" };
-    var nestedObjectLineage = new Dictionary<string, string[]>()
+
+    var modelCurrentParents = new List<string>() { "Model" };
+    var modelObjects = new List<KeyValuePair<string, string[][]>>
     {
-      {"Model", ["Model"]},
-      {"ImageModel", ["Model", "ImageModel"]},
-      {"Mission", ["Model", "Mission"]},
-      {"Configuration", ["Model", "Rocket", "Configuration"]},
-      {"LaunchServiceProvider", ["Model", "LaunchServiceProvider"]},
-      {"SocialLogo", ["Model", "LaunchServiceProvider", "SocialLogo"]},
-      {"LandingLocation", ["Model", "Rocket", "LauncherStage", "Landing", "LandingLocation"]},
-      {"ImageLandingLocation", ["Model", "Rocket", "LauncherStage", "Landing", "LandingLocation", "ImageLandingLocation"]},
-      {"Pad", ["Model", "Pad"]},
-      {"Location", ["Model", "Pad", "Location"]},
-      {"Status", ["Model", "Status"]}
-    };
-    var objectProperties = new Dictionary<string, string[]>()
-    {
-      {"Model", ["Url", "Net", "WindowStart", "WindowEnd", "WeatherConcerns"]},
-      {"ImageModel", ["ThumbnailUrl"]},
-      {"Mission", ["Name", "Description"]},
-      {"Configuration", ["Name", "Description"]},
-      {"LaunchServiceProvider", ["Name"]},
-      {"SocialLogo", ["ThumbnailUrl"]},
-      {"LandingLocation", ["Name"]},
-      {"ImageLandingLocation", ["ThumbnailUrl"]},
-      {"Pad", ["Name", "MapImage"]},
-      {"Location", ["Name"]},
-      {"Status", ["Name", "Description"]},
+      new("Model",[
+        ["Model"],
+        ["Url", "Net", "WindowStart", "WindowEnd", "WeatherConcerns"]]),
+      new("Image", [
+        ["Model", "Image"],
+        ["ThumbnailUrl"]]),
+      new("Mission", [
+        ["Model", "Mission"],
+        ["Name", "Description"]]),
+      new("Configuration", [
+        ["Model", "Rocket", "Configuration"],
+        ["Name", "Description"]]),
+      new("LaunchServiceProvider",[
+        ["Model", "LaunchServiceProvider"],
+        ["Name"]]),
+      new("SocialLogo", [
+        ["Model", "LaunchServiceProvider", "SocialLogo"],
+        ["ThumbnailUrl"]]),
+      new("LandingLocation", [
+        ["Model", "Rocket", "LauncherStage", "Landing", "LandingLocation"],
+        ["Name"]]),
+      new("Image", [
+        ["Model", "Rocket", "LauncherStage", "Landing", "LandingLocation", "Image"],
+        ["ThumbnailUrl"]]),
+      new("Pad", [
+        ["Model", "Pad"],
+        ["Name", "MapImage"]]),
+      new("Location", [
+        ["Model", "Pad", "Location"],
+        ["Name"]]),
+      new("Status", [
+        ["Model", "Status"],
+        ["Name", "Description"]])
     };
 
     var bytes = Encoding.UTF8.GetBytes(rawContent);
@@ -135,15 +144,13 @@ public partial class LaunchDetailsVM : BaseVM
     {
       if (reader.TokenType == JsonTokenType.EndObject)
       {
-        currentLineage.RemoveAt(currentLineage.Count() - 1);
-
+        modelCurrentParents.RemoveAt(modelCurrentParents.Count() - 1);
         continue;
       }
 
       if (reader.TokenType == JsonTokenType.PropertyName)
       {
-        string? propertyNameSnake = reader.GetString();
-        string? propertyNamePascal = Regex.Replace(propertyNameSnake!, @"(?:^|_)([a-z])", match => match.Groups[1].Value.ToUpper());
+        string? currentProperty = Regex.Replace(reader.GetString()!, @"(?:^|_)([a-z])", match => match.Groups[1].Value.ToUpper());
         reader.Read();
 
         if (reader.TokenType == JsonTokenType.StartArray || reader.TokenType == JsonTokenType.EndArray)
@@ -154,83 +161,105 @@ public partial class LaunchDetailsVM : BaseVM
 
         if (reader.TokenType == JsonTokenType.StartObject)
         {
-          if (propertyNamePascal == "Image")
-          {
-            propertyNamePascal += currentLineage.ElementAt(currentLineage.Count() - 1);
-          }
-
-          currentLineage.Add(propertyNamePascal);
+          modelCurrentParents.Add(currentProperty);
           continue;
         }
 
-        var currentObject = currentLineage.Last();
+        var currentObject = modelCurrentParents.Last();
+        var matchingObjects = modelObjects
+          .Where(o => o.Key == currentObject)
+          .ToList();
 
-        if (nestedObjectLineage.ContainsKey(currentObject))
+        if (!matchingObjects.Any(o => o.Value[1].Contains(currentProperty)))
         {
-          var compareLineage = nestedObjectLineage[currentObject];
-          var isEqual = true;
+          continue;
+        }
 
-          for (int i = 0; i < compareLineage.Length; i++)
+        var matchingIndex = 0;
+        var isEqual = false;
+
+        for (int i = 0; i < matchingObjects.Count(); i++)
+        {
+          var compareLineage = matchingObjects[i].Value[0];
+
+          for (int j = 0; j < compareLineage.Length; j++)
           {
-            if (!compareLineage[i].Equals(currentLineage[i]))
+            if (!compareLineage[j].Equals(modelCurrentParents[j]))
             {
-              isEqual = false;
+              break;
+            }
+
+            if (j == modelCurrentParents.Count() - 1 &&
+              compareLineage[j] == modelCurrentParents[j])
+            {
+              matchingIndex = i;
+              isEqual = true;
+              Debug.WriteLine($"c-obj: {compareLineage[j]}, c-prop: {currentProperty}");
             }
           }
+        }
 
-          if (!isEqual)
+        if (!isEqual)
+        {
+          continue;
+        }
+
+        object? value = null;
+
+        if (reader.TokenType == JsonTokenType.String)
+        {
+          value = reader.GetString();
+        }
+
+        if (reader.TokenType == JsonTokenType.Number)
+        {
+          if (reader.TryGetInt64(out long longVal))
           {
-            continue;
+            value = longVal;
           }
-
-          if (objectProperties[currentObject].Contains(propertyNamePascal))
+          if (reader.TryGetDouble(out double doubleVal))
           {
-            object? value = null;
-
-            if (reader.TokenType == JsonTokenType.String)
-            {
-              value = reader.GetString();
-            }
-
-            if (reader.TokenType == JsonTokenType.Number)
-            {
-              if (reader.TryGetInt64(out long longVal))
-              {
-                value = longVal;
-              }
-              if (reader.TryGetDouble(out double doubleVal))
-              {
-                value = doubleVal;
-              }
-            }
-
-            if (reader.TokenType == JsonTokenType.True || reader.TokenType == JsonTokenType.False)
-            {
-              value = reader.GetBoolean();
-            }
-
-            Debug.WriteLine($"obj: {currentObject}, prop: {propertyNamePascal}, value: {value}");
-            if (!model.ContainsKey(currentObject))
-            {
-              model.Add(currentObject, new Dictionary<string, object?> { [propertyNamePascal] = value });
-            }
-            else
-            {
-              model[currentObject].Add(propertyNamePascal, value);
-            }
+            value = doubleVal;
           }
+        }
+
+        if (reader.TokenType == JsonTokenType.True || reader.TokenType == JsonTokenType.False)
+        {
+          value = reader.GetBoolean();
+        }
+
+        if (modelCurrentParents.Count() > 2)
+        {
+          var parentIndex = matchingObjects[matchingIndex].Value[0].Length - 2;
+          currentObject = matchingObjects[matchingIndex].Value[0][parentIndex] + currentObject;
+        }
+
+        Debug.WriteLine($"obj: {currentObject}, prop: {currentProperty}, value: {value}");
+
+        if (!model.ContainsKey(currentObject))
+        {
+          model.Add(currentObject, new Dictionary<string, object?> { [currentProperty] = value });
+        }
+        else
+        {
+          model[currentObject].Add(currentProperty, value);
         }
       }
     }
 
+    foreach (var k in model.Keys)
+    {
+      Debug.WriteLine(k);
+    }
+
     return new LaunchDetailsVM
     {
-      LandingName = model.TryGetValue("LandingLocation", out var landingLocation)
+      LandingName = model.TryGetValue("LandingLandingLocation", out var landingLocation)
         && landingLocation.TryGetValue("Name", out var landingName)
         ? (string?)landingName
         : null,
 
-      LandingThumbnailUrl = model.TryGetValue("ImageLandingLocation", out var imageLandingLocation)
+      LandingThumbnailUrl = model.TryGetValue("LandingLocationImage", out var imageLandingLocation)
         && imageLandingLocation.TryGetValue("ThumbnailUrl", out var landingThumbnailUrl)
         ? (string?)landingThumbnailUrl
         : null,
@@ -240,7 +269,7 @@ public partial class LaunchDetailsVM : BaseVM
         ? (string?)lspName
         : null,
 
-      LspThumbnailUrl = model.TryGetValue("SocialLogo", out var socialLogo)
+      LspThumbnailUrl = model.TryGetValue("LaunchServiceProviderSocialLogo", out var socialLogo)
         && socialLogo.TryGetValue("ThumbnailUrl", out var lspThumbnailUrl)
         ? (string?)lspThumbnailUrl
         : null,
@@ -254,7 +283,7 @@ public partial class LaunchDetailsVM : BaseVM
         ? (string?)missionName
         : null,
 
-      PadLocationName = model.TryGetValue("Location", out var location)
+      PadLocationName = model.TryGetValue("PadLocation", out var location)
         && location.TryGetValue("Name", out var padLocationName)
         ? (string?)padLocationName
         : null,
@@ -268,7 +297,7 @@ public partial class LaunchDetailsVM : BaseVM
         ? (string?)padName
         : null,
 
-      RocketDescription = model.TryGetValue("Configuration", out var configuration)
+      RocketDescription = model.TryGetValue("RocketConfiguration", out var configuration)
         && configuration.TryGetValue("Description", out var rocketDescription)
         ? (string?)rocketDescription
         : null,
@@ -286,7 +315,7 @@ public partial class LaunchDetailsVM : BaseVM
         ? (string?)statusName
         : null,
 
-      ThumbnailUrl = model.TryGetValue("ImageModel", out var imageModel)
+      ThumbnailUrl = model.TryGetValue("Image", out var imageModel)
         && imageModel.TryGetValue("ThumbnailUrl", out var thumbnailUrl)
         ? (string?)thumbnailUrl
         : null,
@@ -320,7 +349,7 @@ public partial class LaunchDetailsVM : BaseVM
       Title = $"{(model.TryGetValue("LaunchServiceProvider", out var titleLsp)
             && titleLsp.TryGetValue("Name", out var titleLspName)
             ? (string?)titleLspName
-            : "")} | {(model.TryGetValue("Configuration", out var titleConfiguration)
+            : "")} | {(model.TryGetValue("RocketConfiguration", out var titleConfiguration)
             && titleConfiguration.TryGetValue("Name", out var titleRocketName)
             ? (string?)titleRocketName
             : "")} | {(model.TryGetValue("Mission", out var titleMission)

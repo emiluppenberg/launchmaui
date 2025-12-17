@@ -236,7 +236,7 @@
           <Label
             FontAttributes="Bold"
             FontSize="Caption"
-            Text="🚀 ROCKET"
+            Text="ROCKET"
             TextColor="Gray" />
           <Label
             FontAttributes="Bold"
