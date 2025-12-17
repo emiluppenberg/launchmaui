@@ -7,12 +7,6 @@ public enum LaunchTypes
   Basic, Normal, Detailed
 }
 
-public static class General
-{
-  public const string placeholderUrl = "https://media.istockphoto.com/id/1472933890/vector/no-image-vector-symbol-missing-available-icon-no-gallery-for-this-moment-placeholder.jpg?s=612x612&w=0&k=20&c=Rdn-lecwAj8ciQEccm0Ep2RX50FCuUJOaEM8qQjiLL0=";
-
-}
-
 public class GreaterThanZeroConverter : IValueConverter
 {
   public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -24,4 +18,37 @@ public class GreaterThanZeroConverter : IValueConverter
   {
     throw new NotImplementedException();
   }
+}
+
+public class StringNotNullOrEmptyConverter : IValueConverter
+{
+  public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+  {
+    return !string.IsNullOrEmpty(value?.ToString());
+  }
+
+  public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+  {
+    throw new NotImplementedException();
+  }
+}
+
+public class StringIsNullOrEmptyConverter : IValueConverter
+{
+  public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+  {
+    return string.IsNullOrEmpty(value?.ToString());
+  }
+
+  public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+  {
+    throw new NotImplementedException();
+  }
+}
+
+public class Converters
+{
+  public static IValueConverter StringNotNullOrEmpty => new StringNotNullOrEmptyConverter();
+  public static IValueConverter StringIsNullOrEmpty => new StringIsNullOrEmptyConverter();
+  public static IValueConverter GreaterThanZeroConverter => new GreaterThanZeroConverter();
 }

@@ -73,23 +73,9 @@ public partial class MainVM : BaseVM
       var response = await _launchesApi.LaunchesUpcomingRetrieveOrDefaultAsync(new Guid(id));
       if (response is null || !response.IsOk) return;
 
-      var sw = Stopwatch.StartNew();
-      var details = response.Ok();
-      sw.Stop();
-      Debug.WriteLine($"elapsed auto: {sw.ElapsedMilliseconds}");
-
-      sw = Stopwatch.StartNew();
-      var _details = LaunchDetailsVM.CreateFromJson(response.RawContent);
-      sw.Stop();
-      Debug.WriteLine($"elapsed manual: {sw.ElapsedMilliseconds}");
-
-      // var details = response.Ok();
-      // if (details is not null)
-      // {
-      //   // responseRawContent = null;
-      //   // var query = new Dictionary<string, object> { { "Launch", details } };
-      //   // await Shell.Current.GoToAsync($"{nameof(DetailsPage)}", true, query);
-      // }
+      var details = LaunchDetailsVM.CreateFromJson(response.RawContent);
+      var query = new Dictionary<string, object> { { "Details", details } };
+      await Shell.Current.GoToAsync($"{nameof(DetailsPage)}", true, query);
     }
     catch (Exception ex)
     {

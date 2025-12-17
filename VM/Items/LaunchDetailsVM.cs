@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Android.Util;
 using CommunityToolkit.Mvvm.ComponentModel;
+using launchapi.Model;
 
 namespace launchmaui.VM.Items;
 
@@ -65,6 +66,33 @@ public partial class LaunchDetailsVM : BaseVM
 
   [ObservableProperty]
   string? weatherConcerns; // WeatherConcerns
+
+  public static LaunchDetailsVM CreateFromModel(LaunchDetailed model)
+  {
+    return new LaunchDetailsVM
+    {
+      LandingName = model.Rocket?.LauncherStage?.FirstOrDefault()?.Landing.LandingLocation?.Name,
+      LandingThumbnailUrl = model.Rocket?.LauncherStage?.FirstOrDefault()?.Landing.LandingLocation?.Image?.ThumbnailUrl,
+      LspName = model.LaunchServiceProvider?.Name,
+      LspThumbnailUrl = model.LaunchServiceProvider?.SocialLogo?.ThumbnailUrl,
+      MissionDescription = model.Mission?.Description,
+      MissionName = model.Mission?.Name,
+      Net = model.Net,
+      PadLocationName = model.Pad?.Location?.Name,
+      PadMapImageUrl = model.Pad?.MapImage,
+      PadName = model.Pad?.Name,
+      RocketDescription = model.Rocket?.VarConfiguration?.Description,
+      RocketName = model.Rocket?.VarConfiguration?.Name,
+      StatusDescription = model.Status?.Description,
+      StatusName = model.Status?.Name,
+      ThumbnailUrl = model.Image?.ThumbnailUrl,
+      Url = model.Url,
+      WeatherConcerns = model.WeatherConcerns,
+      WindowEnd = model.WindowEnd,
+      WindowStart = model.WindowStart,
+      Title = $"{model.LaunchServiceProvider?.Name} | {model.Rocket?.VarConfiguration?.Name} | {model.Mission?.Name}"
+    };
+  }
 
   [DebuggerStepThrough]
   public static LaunchDetailsVM CreateFromJson(string rawContent)
