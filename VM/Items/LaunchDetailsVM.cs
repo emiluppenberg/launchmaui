@@ -155,6 +155,14 @@ public partial class LaunchDetailsVM : BaseVM
 				["Model", "Rocket", "LauncherStage", "Landing" ,"LandingLocation", "Location"],
 				["MapImage"]
 			]),
+			new("Families", [
+				["Model", "Rocket", "Configuration", "Families"],
+				["Name"]
+			]),
+			new("Manufacturer", [
+				["Model","Rocket", "Configuration", "Families", "Manufacturer"],
+				["Name"]
+			]),
 			new("InfoUrls",[
 				["Model", "InfoUrls"],
 				["Url"]
@@ -281,12 +289,19 @@ public partial class LaunchDetailsVM : BaseVM
 					}
 					if (isArray)
 					{
-						currentObject = arrayCurrentParents.First().Key == arrayCurrentParents.Last().Value.Last() ?
-							arrayCurrentParents.First().Key +
-							currentProperty :
-							arrayCurrentParents.First().Key +
-							arrayCurrentParents.Last().Value.Last() +
-							currentProperty;
+						var nestIndex = arrayCurrentParents.Count() - 1;
+						var currentLevel = arrayCurrentParents[nestIndex];
+						var currentArray = nestIndex > 1 ?
+							arrayCurrentParents[nestIndex - 1].Key + currentLevel.Key :
+							currentLevel.Value[currentLevel.Value.IndexOf(currentLevel.Key) - 1] + currentLevel.Key;
+
+						currentObject = currentArray;
+
+						if (nestIndex > 1)
+						{
+							arrayCurrentParents.ForEach(p => Debug.Write($"{p.Key} "));
+							Debug.WriteLine("");
+						}
 					}
 
 					if (!isArray)
