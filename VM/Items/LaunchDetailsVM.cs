@@ -164,17 +164,6 @@ public partial class LaunchDetailsVM : BaseVM
 				["RelativeTime"]
 			])
 		};
-		// var arrayObjects = new List<KeyValuePair<string, string[][]>>
-		// {
-		// 	new("LauncherStage", [
-		// 		["Model", "InfoUrls"],
-		// 		["LauncherFlightNumber", "FirstLaunchDate", "LastLaunchDate"]
-		// 	]),
-		// 	new("Type", [
-		// 		["Model", "Timeline"],
-		// 		["Abbrev", "Description"]
-		// 	])
-		// };
 
 		var isArray = false;
 		var bytes = Encoding.UTF8.GetBytes(rawContent);
@@ -193,7 +182,7 @@ public partial class LaunchDetailsVM : BaseVM
 				{
 					var last = arrayCurrentParents.LastOrDefault();
 
-					if (last.Value.ToList().Count() > 0)
+					if (!last.Value.Last().Equals(last.Key))
 					{
 						last.Value.RemoveAt(last.Value.Count() - 1);
 					}
@@ -201,18 +190,11 @@ public partial class LaunchDetailsVM : BaseVM
 					continue;
 				}
 
-				// if (reader.TokenType == JsonTokenType.StartObject && isArray)
-				// {
-				// 	arrayCurrentParents.LastOrDefault().Value.Add(arrayCurrentParents.LastOrDefault().Key);
-				// 	continue;
-				// }
-
 				if (reader.TokenType == JsonTokenType.EndArray)
 				{
 					if (arrayCurrentParents.Count() > 0)
 					{
 						arrayCurrentParents.RemoveAt(arrayCurrentParents.Count() - 1);
-						Debug.WriteLine("END ARR");
 						isArray = false;
 					}
 
@@ -234,9 +216,6 @@ public partial class LaunchDetailsVM : BaseVM
 						if (match.Count() > 0)
 						{
 							arrayCurrentParents.Add(new(currentProperty, lineage));
-							Debug.Write($"\nNEW ARR: {arrayCurrentParents.LastOrDefault().Key}\n");
-							// arrayCurrentParents.LastOrDefault().Value.ForEach(v => Debug.Write($"{v} "));
-							// Debug.WriteLine("");
 							isArray = true;
 							continue;
 						}
@@ -302,13 +281,13 @@ public partial class LaunchDetailsVM : BaseVM
 					}
 					if (isArray)
 					{
-						currentObject =
+						currentObject = arrayCurrentParents.First().Key == arrayCurrentParents.Last().Value.Last() ?
+							arrayCurrentParents.First().Key +
+							currentProperty :
 							arrayCurrentParents.First().Key +
 							arrayCurrentParents.Last().Value.Last() +
 							currentProperty;
 					}
-
-					Debug.WriteLine($"ADD : {currentObject}.{currentProperty} - {value}");
 
 					if (!isArray)
 					{
@@ -343,20 +322,14 @@ public partial class LaunchDetailsVM : BaseVM
 							}
 						}
 					}
-
-					foreach (var k in model[currentObject].Keys)
-					{
-						Debug.WriteLine($"{k} - {model[currentObject][k]}");
-					}
-					Debug.WriteLine("");
 				}
 			}
 
 			foreach (var k in model.Keys)
 			{
-				foreach (var _k in model[k].Keys)
+				foreach (var kvp in model[k])
 				{
-					Debug.WriteLine($"{k} : {_k} : {model[k][_k]}");
+					Debug.WriteLine($"{k}.{kvp.Key} - {kvp.Value}");
 				}
 			}
 
@@ -485,7 +458,6 @@ public partial class LaunchDetailsVM : BaseVM
 
 		if (matchingObjects.Any(o => o.Value[1].Contains(currentProperty)))
 		{
-			// Debug.Write("MODEL ");
 			return CompareLineage(modelCurrentParents, matchingObjects);
 		}
 
@@ -497,14 +469,6 @@ public partial class LaunchDetailsVM : BaseVM
 		List<KeyValuePair<string, string[][]>> arrayObjects,
 		string currentProperty)
 	{
-		Debug.Write("\nKEYS // VALUES\n");
-		arrayCurrentParents.ForEach(x =>
-		{
-			Debug.Write($"{x.Key} : ");
-			x.Value.ForEach(_x => Debug.Write($"{_x} "));
-			Debug.Write("\n");
-		});
-
 		var currentArray = arrayCurrentParents.First().Key;
 		var currentObject = arrayCurrentParents.Last().Value.Last();
 
@@ -514,11 +478,9 @@ public partial class LaunchDetailsVM : BaseVM
 
 		if (matchingObjects.Any(o => o.Value[1].Contains(currentProperty)))
 		{
-			Debug.Write("ARRAY ");
 			return CompareLineage(arrayCurrentParents.Last().Value, matchingObjects);
 		}
 
-		Debug.WriteLine("NOT FOUND");
 		return (false, null, null);
 	}
 
@@ -526,33 +488,24 @@ public partial class LaunchDetailsVM : BaseVM
 		List<string> currentParents,
 		List<KeyValuePair<string, string[][]>> matches)
 	{
-		Debug.Write("find: ");
-		currentParents.ForEach(p => Debug.Write($"{p} "));
-
 		for (int i = 0; i < matches.Count(); i++)
 		{
-			Debug.Write($"\ni : {i} ");
 			var compareLineage = matches[i].Value[0];
 
 			for (int j = 0; j < compareLineage.Length; j++)
 			{
-				Debug.Write($"{compareLineage[j]} ");
-
 				if (!compareLineage[j].Equals(currentParents[j]))
 				{
-					Debug.Write("X");
 					break;
 				}
 
 				if (j == currentParents.Count() - 1 &&
 					compareLineage[j] == currentParents[j])
 				{
-					Debug.Write("*\n");
 					return (true, i, matches);
 				}
 			}
 		}
-		Debug.WriteLine("\nNOT FOUND");
 
 		return (false, null, null);
 	}
