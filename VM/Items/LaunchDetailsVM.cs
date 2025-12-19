@@ -189,8 +189,9 @@ public partial class LaunchDetailsVM : BaseVM
 				if (reader.TokenType == JsonTokenType.EndObject && isArray)
 				{
 					var last = arrayCurrentParents.LastOrDefault();
+					var lastIndex = arrayCurrentParents.IndexOf(last);
 
-					if (!last.Value.Last().Equals(last.Key))
+					if (last.Value.IndexOf(last.Key) >= lastIndex)
 					{
 						last.Value.RemoveAt(last.Value.Count() - 1);
 					}
@@ -200,9 +201,10 @@ public partial class LaunchDetailsVM : BaseVM
 
 				if (reader.TokenType == JsonTokenType.EndArray)
 				{
-					if (arrayCurrentParents.Count() > 0)
+					arrayCurrentParents.RemoveAt(arrayCurrentParents.Count() - 1);
+
+					if (arrayCurrentParents.Count() == 0)
 					{
-						arrayCurrentParents.RemoveAt(arrayCurrentParents.Count() - 1);
 						isArray = false;
 					}
 
@@ -218,7 +220,7 @@ public partial class LaunchDetailsVM : BaseVM
 
 					if (reader.TokenType == JsonTokenType.StartArray)
 					{
-						var lineage = new List<string>(modelCurrentParents) { currentProperty };
+						var lineage = new List<string>(!isArray ? modelCurrentParents : arrayCurrentParents.Last().Value) { currentProperty };
 						var match = arrayObjects.Where(a => a.Key == currentProperty && a.Value[0].SequenceEqual(lineage)).ToList();
 
 						if (match.Count() > 0)
@@ -289,20 +291,18 @@ public partial class LaunchDetailsVM : BaseVM
 					}
 					if (isArray)
 					{
-						var nestIndex = arrayCurrentParents.Count() - 1;
-						var currentLevel = arrayCurrentParents[nestIndex];
-						var currentArray = nestIndex > 1 ?
-							arrayCurrentParents[nestIndex - 1].Key + currentLevel.Key :
+						var nestedArrayIndex = arrayCurrentParents.Count() - 1;
+						var nestedObjectIndex = arrayCurrentParents[nestedArrayIndex].Value.Count() - 1;
+						var currentLevel = arrayCurrentParents[nestedArrayIndex];
+						var isNestedObject = nestedObjectIndex > currentLevel.Value.IndexOf(currentLevel.Key);
+
+						currentProperty = isNestedObject ? currentLevel.Value.Last() + currentProperty : currentProperty;
+						currentObject = nestedArrayIndex > 0 ?
+							arrayCurrentParents[nestedArrayIndex - 1].Key + currentLevel.Key :
 							currentLevel.Value[currentLevel.Value.IndexOf(currentLevel.Key) - 1] + currentLevel.Key;
-
-						currentObject = currentArray;
-
-						if (nestIndex > 1)
-						{
-							arrayCurrentParents.ForEach(p => Debug.Write($"{p.Key} "));
-							Debug.WriteLine("");
-						}
 					}
+
+					Debug.WriteLine($"{currentObject}.{currentProperty} - {value}");
 
 					if (!isArray)
 					{
@@ -337,14 +337,6 @@ public partial class LaunchDetailsVM : BaseVM
 							}
 						}
 					}
-				}
-			}
-
-			foreach (var k in model.Keys)
-			{
-				foreach (var kvp in model[k])
-				{
-					Debug.WriteLine($"{k}.{kvp.Key} - {kvp.Value}");
 				}
 			}
 
@@ -468,7 +460,7 @@ public partial class LaunchDetailsVM : BaseVM
 	{
 		var currentObject = modelCurrentParents.Last();
 		var matchingObjects = modelObjects
-			.Where(o => o.Key == currentObject)
+			.Where(o => o.Key == currentObject && o.Value[0].SequenceEqual(modelCurrentParents))
 			.ToList();
 
 		if (matchingObjects.Any(o => o.Value[1].Contains(currentProperty)))
@@ -484,8 +476,9 @@ public partial class LaunchDetailsVM : BaseVM
 		List<KeyValuePair<string, string[][]>> arrayObjects,
 		string currentProperty)
 	{
-		var currentArray = arrayCurrentParents.First().Key;
-		var currentObject = arrayCurrentParents.Last().Value.Last();
+		var last = arrayCurrentParents.Last();
+		var currentArray = last.Key;
+		var currentObject = last.Value.Last();
 
 		var matchingObjects = arrayObjects
 			.Where(o => o.Key == currentArray && o.Value[0].Last() == currentObject)
