@@ -94,7 +94,7 @@ public partial class LaunchDetailsVM : BaseVM
 	}
 
 	[DebuggerStepThrough]
-	public static LaunchDetailsVM CreateFromJson(string rawContent)
+	public static LaunchDetailsVM? CreateFromJson(string rawContent)
 	{
 		var model = new Dictionary<string, Dictionary<string, object?>>();
 
@@ -209,10 +209,9 @@ public partial class LaunchDetailsVM : BaseVM
 
 				if (reader.TokenType == JsonTokenType.EndArray)
 				{
-					arrayCurrentParents.RemoveAt(arrayCurrentParents.Count() - 1);
-
-					if (arrayCurrentParents.Count() == 0)
+					if (arrayCurrentParents.Count() > 0)
 					{
+						arrayCurrentParents.RemoveAt(arrayCurrentParents.Count() - 1);
 						Debug.WriteLine("END ARR");
 						isArray = false;
 					}
@@ -227,26 +226,26 @@ public partial class LaunchDetailsVM : BaseVM
 
 					reader.Read();
 
-					if (reader.TokenType == JsonTokenType.StartArray && !isArray)
+					if (reader.TokenType == JsonTokenType.StartArray)
 					{
 						var lineage = new List<string>(modelCurrentParents) { currentProperty };
-						arrayCurrentParents.Add(new(currentProperty, lineage));
-						Debug.Write($"\nNEW ARR: ");
-						arrayCurrentParents.LastOrDefault().Value.ForEach(v => Debug.Write($"{v} "));
-						Debug.WriteLine("");
-						isArray = true;
-						continue;
-					}
+						var match = arrayObjects.Where(a => a.Key == currentProperty && a.Value[0].SequenceEqual(lineage)).ToList();
 
-					if (reader.TokenType == JsonTokenType.StartArray && isArray)
-					{
-						var lineage = new List<string>(arrayCurrentParents.First().Value) { currentProperty };
-						arrayCurrentParents.Add(new(currentProperty, lineage));
-						Debug.Write($"\nNEW ARR level{arrayCurrentParents.Count()}: ");
-						arrayCurrentParents.LastOrDefault().Value.ForEach(v => Debug.Write($"{v} "));
-						Debug.WriteLine("");
-						// isArray = true;
-						continue;
+						if (match.Count() > 0)
+						{
+							arrayCurrentParents.Add(new(currentProperty, lineage));
+							Debug.Write($"\nNEW ARR: {arrayCurrentParents.LastOrDefault().Key}\n");
+							// arrayCurrentParents.LastOrDefault().Value.ForEach(v => Debug.Write($"{v} "));
+							// Debug.WriteLine("");
+							isArray = true;
+							continue;
+						}
+
+						if (match.Count() == 0)
+						{
+							reader.Skip();
+							continue;
+						}
 					}
 
 					if (reader.TokenType == JsonTokenType.StartObject && !isArray)
@@ -296,22 +295,53 @@ public partial class LaunchDetailsVM : BaseVM
 
 					var currentObject = isArray is false ? modelCurrentParents.Last() : arrayCurrentParents.Last().Key;
 
-					if (!isArray && modelCurrentParents.Count() > 1 ||
-							isArray && arrayCurrentParents.LastOrDefault().Value.Count() > 1)
+					if (!isArray && modelCurrentParents.Count() > 1)
 					{
 						var parentIndex = matches[(int)matchingIndex].Value[0].Length - 2;
 						currentObject = matches[(int)matchingIndex].Value[0][parentIndex] + currentObject;
 					}
-
-					// Debug.WriteLine($"isArray:{isArray}-{currentObject}.{currentProperty}");
-
-					if (!model.ContainsKey(currentObject))
+					if (isArray)
 					{
-						model.Add(currentObject, new Dictionary<string, object?> { [currentProperty] = value });
+						currentObject =
+							arrayCurrentParents.First().Key +
+							arrayCurrentParents.Last().Value.Last() +
+							currentProperty;
 					}
-					else
+
+					Debug.WriteLine($"ADD : {currentObject}.{currentProperty} - {value}");
+
+					if (!isArray)
 					{
-						model[currentObject].Add(currentProperty, value);
+						if (!model.ContainsKey(currentObject))
+						{
+							model.Add(currentObject, new Dictionary<string, object?> { [currentProperty] = value });
+						}
+						else
+						{
+							model[currentObject].Add(currentProperty, value);
+						}
+					}
+					if (isArray)
+					{
+						if (!model.ContainsKey(currentObject))
+						{
+							var list = new List<object?>() { value };
+							model.Add(currentObject, new Dictionary<string, object?> { [currentProperty] = list });
+						}
+						else
+						{
+							var list = new List<object?>() { value };
+
+							if (!model[currentObject].ContainsKey(currentProperty))
+							{
+								model[currentObject].Add(currentProperty, list);
+							}
+							else
+							{
+								list = model[currentObject][currentProperty] as List<object?>;
+								list!.Add(value);
+							}
+						}
 					}
 
 					foreach (var k in model[currentObject].Keys)
@@ -321,125 +351,126 @@ public partial class LaunchDetailsVM : BaseVM
 					Debug.WriteLine("");
 				}
 			}
+
+			foreach (var k in model.Keys)
+			{
+				foreach (var _k in model[k].Keys)
+				{
+					Debug.WriteLine($"{k} : {_k} : {model[k][_k]}");
+				}
+			}
+
+			return new LaunchDetailsVM
+			{
+				LandingName = model.TryGetValue("LandingLandingLocation", out var landingLocation)
+					&& landingLocation.TryGetValue("Name", out var landingName)
+					? (string?)landingName
+					: null,
+
+				LandingThumbnailUrl = model.TryGetValue("LandingLocationImage", out var imageLandingLocation)
+					&& imageLandingLocation.TryGetValue("ThumbnailUrl", out var landingThumbnailUrl)
+					? (string?)landingThumbnailUrl
+					: null,
+
+				LspName = model.TryGetValue("LaunchServiceProvider", out var lsp)
+					&& lsp.TryGetValue("Name", out var lspName)
+					? (string?)lspName
+					: null,
+
+				LspThumbnailUrl = model.TryGetValue("LaunchServiceProviderSocialLogo", out var socialLogo)
+					&& socialLogo.TryGetValue("ThumbnailUrl", out var lspThumbnailUrl)
+					? (string?)lspThumbnailUrl
+					: null,
+
+				MissionDescription = model.TryGetValue("ModelMission", out var mission)
+					&& mission.TryGetValue("Description", out var missionDescription)
+					? (string?)missionDescription
+					: null,
+
+				MissionName = mission is not null && mission.TryGetValue("Name", out var missionName)
+					? (string?)missionName
+					: null,
+
+				PadLocationName = model.TryGetValue("PadLocation", out var location)
+					&& location.TryGetValue("Name", out var padLocationName)
+					? (string?)padLocationName
+					: null,
+
+				PadMapImageUrl = model.TryGetValue("ModelPad", out var pad)
+					&& pad.TryGetValue("MapImage", out var padMapImage)
+					? (string?)padMapImage
+					: null,
+
+				PadName = pad is not null && pad.TryGetValue("Name", out var padName)
+					? (string?)padName
+					: null,
+
+				RocketDescription = model.TryGetValue("RocketConfiguration", out var configuration)
+					&& configuration.TryGetValue("Description", out var rocketDescription)
+					? (string?)rocketDescription
+					: null,
+
+				RocketName = configuration is not null && configuration.TryGetValue("Name", out var rocketName)
+					? (string?)rocketName
+					: null,
+
+				StatusDescription = model.TryGetValue("ModelStatus", out var status)
+					&& status.TryGetValue("Description", out var statusDescription)
+					? (string?)statusDescription
+					: null,
+
+				StatusName = status is not null && status.TryGetValue("Name", out var statusName)
+					? (string?)statusName
+					: null,
+
+				ThumbnailUrl = model.TryGetValue("ModelImage", out var imageModel)
+					&& imageModel.TryGetValue("ThumbnailUrl", out var thumbnailUrl)
+					? (string?)thumbnailUrl
+					: null,
+
+				Url = model["Model"].TryGetValue("Url", out var url)
+					? (string?)url
+					: null,
+
+				WeatherConcerns = model["Model"].TryGetValue("WeatherConcerns", out var weather)
+					? (string?)weather
+					: null,
+
+				Net = model["Model"].TryGetValue("Net", out var netObj)
+					&& netObj is string netStr
+					&& DateTime.TryParse(netStr, out var netDate)
+					? netDate
+					: null,
+
+				WindowEnd = model["Model"].TryGetValue("WindowEnd", out var windowEndObj)
+					&& windowEndObj is string windowEndStr
+					&& DateTime.TryParse(windowEndStr, out var windowEndDate)
+					? windowEndDate
+					: null,
+
+				WindowStart = model["Model"].TryGetValue("WindowStart", out var windowStartObj)
+					&& windowStartObj is string windowStartStr
+					&& DateTime.TryParse(windowStartStr, out var windowStartDate)
+					? windowStartDate
+					: null,
+
+				Title = $"{(model.TryGetValue("LaunchServiceProvider", out var titleLsp)
+							&& titleLsp.TryGetValue("Name", out var titleLspName)
+							? (string?)titleLspName
+							: "")} | {(model.TryGetValue("RocketConfiguration", out var titleConfiguration)
+							&& titleConfiguration.TryGetValue("Name", out var titleRocketName)
+							? (string?)titleRocketName
+							: "")} | {(model.TryGetValue("Mission", out var titleMission)
+							&& titleMission.TryGetValue("Name", out var titleMissionName)
+							? (string?)titleMissionName
+							: "")}"
+			};
 		}
 		catch (Exception ex)
 		{
 			Debug.WriteLine($"// BASE - {ex.GetBaseException().Message} // INNER - {ex.InnerException?.Message} // SOURCE - {ex.Source} // STACKTRACE - {ex.StackTrace} // TARGETSITE - {ex.TargetSite}");
+			return null;
 		}
-
-		// foreach (var k in model.Keys)
-		// {
-		//   foreach (var _k in model[k].Keys)
-		//   {
-		//     Debug.WriteLine($"{k} : {_k} : {model[k][_k]}");
-		//   }
-		// }
-
-		return new LaunchDetailsVM
-		{
-			LandingName = model.TryGetValue("LandingLandingLocation", out var landingLocation)
-				&& landingLocation.TryGetValue("Name", out var landingName)
-				? (string?)landingName
-				: null,
-
-			LandingThumbnailUrl = model.TryGetValue("LandingLocationImage", out var imageLandingLocation)
-				&& imageLandingLocation.TryGetValue("ThumbnailUrl", out var landingThumbnailUrl)
-				? (string?)landingThumbnailUrl
-				: null,
-
-			LspName = model.TryGetValue("LaunchServiceProvider", out var lsp)
-				&& lsp.TryGetValue("Name", out var lspName)
-				? (string?)lspName
-				: null,
-
-			LspThumbnailUrl = model.TryGetValue("LaunchServiceProviderSocialLogo", out var socialLogo)
-				&& socialLogo.TryGetValue("ThumbnailUrl", out var lspThumbnailUrl)
-				? (string?)lspThumbnailUrl
-				: null,
-
-			MissionDescription = model.TryGetValue("Mission", out var mission)
-				&& mission.TryGetValue("Description", out var missionDescription)
-				? (string?)missionDescription
-				: null,
-
-			MissionName = mission is not null && mission.TryGetValue("Name", out var missionName)
-				? (string?)missionName
-				: null,
-
-			PadLocationName = model.TryGetValue("PadLocation", out var location)
-				&& location.TryGetValue("Name", out var padLocationName)
-				? (string?)padLocationName
-				: null,
-
-			PadMapImageUrl = model.TryGetValue("Pad", out var pad)
-				&& pad.TryGetValue("MapImage", out var padMapImage)
-				? (string?)padMapImage
-				: null,
-
-			PadName = pad is not null && pad.TryGetValue("Name", out var padName)
-				? (string?)padName
-				: null,
-
-			RocketDescription = model.TryGetValue("RocketConfiguration", out var configuration)
-				&& configuration.TryGetValue("Description", out var rocketDescription)
-				? (string?)rocketDescription
-				: null,
-
-			RocketName = configuration is not null && configuration.TryGetValue("Name", out var rocketName)
-				? (string?)rocketName
-				: null,
-
-			StatusDescription = model.TryGetValue("Status", out var status)
-				&& status.TryGetValue("Description", out var statusDescription)
-				? (string?)statusDescription
-				: null,
-
-			StatusName = status is not null && status.TryGetValue("Name", out var statusName)
-				? (string?)statusName
-				: null,
-
-			ThumbnailUrl = model.TryGetValue("Image", out var imageModel)
-				&& imageModel.TryGetValue("ThumbnailUrl", out var thumbnailUrl)
-				? (string?)thumbnailUrl
-				: null,
-
-			Url = model["Model"].TryGetValue("Url", out var url)
-				? (string?)url
-				: null,
-
-			WeatherConcerns = model["Model"].TryGetValue("WeatherConcerns", out var weather)
-				? (string?)weather
-				: null,
-
-			Net = model["Model"].TryGetValue("Net", out var netObj)
-				&& netObj is string netStr
-				&& DateTime.TryParse(netStr, out var netDate)
-				? netDate
-				: null,
-
-			WindowEnd = model["Model"].TryGetValue("WindowEnd", out var windowEndObj)
-				&& windowEndObj is string windowEndStr
-				&& DateTime.TryParse(windowEndStr, out var windowEndDate)
-				? windowEndDate
-				: null,
-
-			WindowStart = model["Model"].TryGetValue("WindowStart", out var windowStartObj)
-				&& windowStartObj is string windowStartStr
-				&& DateTime.TryParse(windowStartStr, out var windowStartDate)
-				? windowStartDate
-				: null,
-
-			Title = $"{(model.TryGetValue("LaunchServiceProvider", out var titleLsp)
-						&& titleLsp.TryGetValue("Name", out var titleLspName)
-						? (string?)titleLspName
-						: "")} | {(model.TryGetValue("RocketConfiguration", out var titleConfiguration)
-						&& titleConfiguration.TryGetValue("Name", out var titleRocketName)
-						? (string?)titleRocketName
-						: "")} | {(model.TryGetValue("Mission", out var titleMission)
-						&& titleMission.TryGetValue("Name", out var titleMissionName)
-						? (string?)titleMissionName
-						: "")}"
-		};
 	}
 
 	private static (bool, int?, List<KeyValuePair<string, string[][]>>?) IsModelLineage(
