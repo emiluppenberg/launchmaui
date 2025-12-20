@@ -25,12 +25,6 @@ public partial class LaunchDetailsVM : BaseVM
 	string? rocketDescription; // Rocket -> Configuration -> Description
 
 	[ObservableProperty]
-	string? landingName; // Rocket -> LauncherStage -> Landing -> LandingLocation -> Name
-
-	[ObservableProperty]
-	string? landingThumbnailUrl; // Rocket -> LauncherStage -> Landing -> LandingLocation -> ImageLandingLocation -> ThumbnailUrl
-
-	[ObservableProperty]
 	string? lspName; // LaunchServiceProvider -> Name
 
 	[ObservableProperty]
@@ -66,32 +60,32 @@ public partial class LaunchDetailsVM : BaseVM
 	[ObservableProperty]
 	string? weatherConcerns; // WeatherConcerns
 
-	public static LaunchDetailsVM CreateFromModel(LaunchDetailed model)
-	{
-		return new LaunchDetailsVM
-		{
-			LandingName = model.Rocket?.LauncherStage?.FirstOrDefault()?.Landing.LandingLocation?.Name,
-			LandingThumbnailUrl = model.Rocket?.LauncherStage?.FirstOrDefault()?.Landing.LandingLocation?.Image?.ThumbnailUrl,
-			LspName = model.LaunchServiceProvider?.Name,
-			LspThumbnailUrl = model.LaunchServiceProvider?.SocialLogo?.ThumbnailUrl,
-			MissionDescription = model.Mission?.Description,
-			MissionName = model.Mission?.Name,
-			Net = model.Net,
-			PadLocationName = model.Pad?.Location?.Name,
-			PadMapImageUrl = model.Pad?.MapImage,
-			PadName = model.Pad?.Name,
-			RocketDescription = model.Rocket?.VarConfiguration?.Description,
-			RocketName = model.Rocket?.VarConfiguration?.Name,
-			StatusDescription = model.Status?.Description,
-			StatusName = model.Status?.Name,
-			ThumbnailUrl = model.Image?.ThumbnailUrl,
-			Url = model.Url,
-			WeatherConcerns = model.WeatherConcerns,
-			WindowEnd = model.WindowEnd,
-			WindowStart = model.WindowStart,
-			Title = $"{model.LaunchServiceProvider?.Name} | {model.Rocket?.VarConfiguration?.Name} | {model.Mission?.Name}"
-		};
-	}
+	[ObservableProperty]
+	int?[]? launcherStageLauncherFlightNumber;
+
+	[ObservableProperty]
+	DateTime?[]? launcherStageLauncherFirstLaunchDate;
+
+	[ObservableProperty]
+	DateTime?[]? launcherStageLauncherLastLaunchDate;
+
+	[ObservableProperty]
+	string?[]? launcherStageLandingLocationName;
+
+	[ObservableProperty]
+	string?[]? launcherStageImageThumbnailUrl; // prop for LandingLocation image
+
+	[ObservableProperty]
+	string?[]? infoUrlsUrl;
+
+	[ObservableProperty]
+	string?[]? timelineRelativeTime;
+
+	[ObservableProperty]
+	string?[]? timelineTypeDescription;
+
+	[ObservableProperty]
+	string?[]? timelineTypeAbbrev;
 
 	[DebuggerStepThrough]
 	public static LaunchDetailsVM? CreateFromJson(string rawContent)
@@ -152,16 +146,8 @@ public partial class LaunchDetailsVM : BaseVM
 				["Name"]
 			]),
 			new("LauncherStage",[
-				["Model", "Rocket", "LauncherStage", "Landing" ,"LandingLocation", "Location"],
-				["MapImage"]
-			]),
-			new("Families", [
-				["Model", "Rocket", "Configuration", "Families"],
-				["Name"]
-			]),
-			new("Manufacturer", [
-				["Model","Rocket", "Configuration", "Families", "Manufacturer"],
-				["Name"]
+				["Model", "Rocket", "LauncherStage", "Landing" ,"LandingLocation", "Image"],
+				["ThumbnailUrl"]
 			]),
 			new("InfoUrls",[
 				["Model", "InfoUrls"],
@@ -170,6 +156,10 @@ public partial class LaunchDetailsVM : BaseVM
 			new("Timeline",[
 				["Model", "Timeline"],
 				["RelativeTime"]
+			]),
+			new("Timeline",[
+				["Model", "Timeline", "Type"],
+				["Description", "Abbrev"]
 			])
 		};
 
@@ -340,22 +330,104 @@ public partial class LaunchDetailsVM : BaseVM
 				}
 			}
 
+			var launcherStageLandingLocationName = new List<string?>();
+			var launcherStageImageThumbnailUrl = new List<string?>();
+			var launcherStageLauncherFlightNumber = new List<int?>();
+			var launcherStageLauncherFirstLaunchDate = new List<DateTime?>();
+			var launcherStageLauncherLastLaunchDate = new List<DateTime?>();
+			var infoUrlsUrl = new List<string?>();
+			var timelineRelativeTime = new List<string?>();
+			var timelineTypeDescription = new List<string?>();
+			var timelineTypeAbbrev = new List<string?>();
+
+			if (model.TryGetValue("RocketLauncherStage", out var launcherStage))
+			{
+				if (launcherStage.TryGetValue("LandingLocationName", out var landingLocationName))
+				{
+					CastToList<string?>(launcherStageLandingLocationName, landingLocationName as List<object?>);
+				}
+
+				if (launcherStage.TryGetValue("ImageThumbnailUrl", out var imageThumbnailUrl))
+				{
+					CastToList<string?>(launcherStageImageThumbnailUrl, imageThumbnailUrl as List<object?>);
+				}
+
+				if (launcherStage.TryGetValue("LauncherFlightNumber", out var launcherFlightNumber))
+				{
+					CastToList<int?>(launcherStageLauncherFlightNumber, launcherFlightNumber as List<object?>);
+				}
+
+				if (launcherStage.TryGetValue("LauncherFirstLaunchDate", out var launcherFirstLaunchDate))
+				{
+					CastToList<DateTime?>(launcherStageLauncherFirstLaunchDate, launcherFirstLaunchDate as List<object?>);
+				}
+
+				if (launcherStage.TryGetValue("LauncherLastLaunchDate", out var launcherLastLaunchDate))
+				{
+					CastToList<DateTime?>(launcherStageLauncherLastLaunchDate, launcherLastLaunchDate as List<object?>);
+				}
+			}
+
+			if (model.TryGetValue("ModelInfoUrls", out var infoUrls))
+			{
+				if (infoUrls.TryGetValue("Url", out var urls))
+				{
+					CastToList<string?>(infoUrlsUrl, urls as List<object?>);
+				}
+			}
+
+			if (model.TryGetValue("ModelTimeline", out var timeline))
+			{
+				if (timeline.TryGetValue("RelativeTime", out var relativeTime))
+				{
+					CastToList<string?>(timelineRelativeTime, relativeTime as List<object?>);
+				}
+
+				if (timeline.TryGetValue("TypeDescription", out var typeDescription))
+				{
+					CastToList<string?>(timelineTypeDescription, typeDescription as List<object?>);
+				}
+
+				if (timeline.TryGetValue("TypeAbbrev", out var typeAbbrev))
+				{
+					CastToList<string?>(timelineTypeAbbrev, typeAbbrev as List<object?>);
+				}
+			}
+
+
 			return new LaunchDetailsVM
 			{
-				LandingName = model.TryGetValue("LandingLandingLocation", out var landingLocation)
-					&& landingLocation.TryGetValue("Name", out var landingName)
-					? (string?)landingName
-					: null,
+				LauncherStageLandingLocationName = launcherStageLandingLocationName.Count > 0 ?
+					launcherStageLandingLocationName.ToArray() : null,
 
-				LandingThumbnailUrl = model.TryGetValue("LandingLocationImage", out var imageLandingLocation)
-					&& imageLandingLocation.TryGetValue("ThumbnailUrl", out var landingThumbnailUrl)
-					? (string?)landingThumbnailUrl
-					: null,
+				LauncherStageImageThumbnailUrl = launcherStageImageThumbnailUrl.Count > 0 ?
+					launcherStageImageThumbnailUrl.ToArray() : null,
 
-				LspName = model.TryGetValue("LaunchServiceProvider", out var lsp)
-					&& lsp.TryGetValue("Name", out var lspName)
-					? (string?)lspName
-					: null,
+				LauncherStageLauncherFlightNumber = launcherStageLauncherFlightNumber.Count > 0 ?
+					launcherStageLauncherFlightNumber.ToArray() : null,
+
+				LauncherStageLauncherFirstLaunchDate = launcherStageLauncherFirstLaunchDate.Count > 0 ?
+					launcherStageLauncherFirstLaunchDate.ToArray() : null,
+
+				LauncherStageLauncherLastLaunchDate = launcherStageLauncherLastLaunchDate.Count > 0 ?
+					launcherStageLauncherLastLaunchDate.ToArray() : null,
+
+				InfoUrlsUrl = infoUrlsUrl.Count > 0 ?
+					infoUrlsUrl.ToArray() : null,
+
+				TimelineRelativeTime = timelineRelativeTime.Count > 0 ?
+					timelineRelativeTime.ToArray() : null,
+
+				TimelineTypeDescription = timelineTypeDescription.Count > 0 ?
+					timelineTypeDescription.ToArray() : null,
+
+				TimelineTypeAbbrev = timelineTypeAbbrev.Count > 0 ?
+					timelineTypeAbbrev.ToArray() : null,
+
+				LspName = model.TryGetValue("ModelLaunchServiceProvider", out var lsp)
+						&& lsp.TryGetValue("Name", out var lspName)
+						? (string?)lspName
+						: null,
 
 				LspThumbnailUrl = model.TryGetValue("LaunchServiceProviderSocialLogo", out var socialLogo)
 					&& socialLogo.TryGetValue("ThumbnailUrl", out var lspThumbnailUrl)
@@ -434,13 +506,13 @@ public partial class LaunchDetailsVM : BaseVM
 					? windowStartDate
 					: null,
 
-				Title = $"{(model.TryGetValue("LaunchServiceProvider", out var titleLsp)
+				Title = $"{(model.TryGetValue("ModelLaunchServiceProvider", out var titleLsp)
 							&& titleLsp.TryGetValue("Name", out var titleLspName)
 							? (string?)titleLspName
 							: "")} | {(model.TryGetValue("RocketConfiguration", out var titleConfiguration)
 							&& titleConfiguration.TryGetValue("Name", out var titleRocketName)
 							? (string?)titleRocketName
-							: "")} | {(model.TryGetValue("Mission", out var titleMission)
+							: "")} | {(model.TryGetValue("ModelMission", out var titleMission)
 							&& titleMission.TryGetValue("Name", out var titleMissionName)
 							? (string?)titleMissionName
 							: "")}"
@@ -516,5 +588,22 @@ public partial class LaunchDetailsVM : BaseVM
 		}
 
 		return (false, null, null);
+	}
+
+	private static void CastToList<T>(List<T?> listToAdd, List<object?>? listToCast)
+	{
+		if (listToCast is not null)
+		{
+			foreach (var o in listToCast)
+			{
+				if (o is T value)
+				{
+					listToAdd.Add(value);
+					continue;
+				}
+
+				listToAdd.Add(default);
+			}
+		}
 	}
 }
