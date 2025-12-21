@@ -1,25 +1,21 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using launchmaui.Utilities;
 
 namespace launchmaui.VM.Items;
 
-public partial class LaunchVM(Guid id, string? name, DateTime? windowStart, DateTime? windowEnd, string? url, LaunchTypes launchType) : BaseVM
+public partial class LaunchVM(Guid id, string? missionName, DateTime? net, string? thumbnailUrl, string lspName, string? lspAbbrev) : BaseVM
 {
   [ObservableProperty]
   string id = id.ToString();
 
   [ObservableProperty]
-  string displayName = name is not null ? name : id.ToString();
+  string? missionName = !string.IsNullOrEmpty(missionName) || !string.IsNullOrWhiteSpace(missionName) ? missionName : "no name provided";
 
   [ObservableProperty]
-  DateTime? windowStart = windowStart;
+  DateTime? net = net;
 
   [ObservableProperty]
-  DateTime? windowEnd = windowEnd;
+  string thumbnailUrl = !string.IsNullOrEmpty(thumbnailUrl) || !string.IsNullOrWhiteSpace(thumbnailUrl) ? thumbnailUrl : "fallback.jpg";
 
   [ObservableProperty]
-  string imageUrl = url is not null ? url : "";
-
-  [ObservableProperty]
-  LaunchTypes launchType = launchType;
+  string? lspName = lspName.Length > 25 && !string.IsNullOrEmpty(lspAbbrev) && !string.IsNullOrWhiteSpace(lspAbbrev) ? lspAbbrev : lspName;
 }

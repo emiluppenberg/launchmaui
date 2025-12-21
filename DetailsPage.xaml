@@ -9,10 +9,11 @@
   xmlns:vm="clr-namespace:launchmaui.VM"
   Title="{Binding Details.Title}"
   x:DataType="vm:DetailsVM"
-  Background="{StaticResource BackgroundGradient}">
+  Background="{StaticResource BackgroundGradient}"
+  Shell.NavBarIsVisible="False">
 
   <ScrollView>
-    <VerticalStackLayout Padding="10" Spacing="15">
+    <VerticalStackLayout Padding="30" Spacing="15">
       <!--  Main Image  -->
       <Border
         HeightRequest="150"
@@ -75,7 +76,7 @@
       </FlexLayout>
 
       <!--  STATUS NAME  -->
-      <HorizontalStackLayout>
+      <VerticalStackLayout>
         <Label
           FontAttributes="Bold"
           FontSize="Subtitle"
@@ -83,11 +84,11 @@
           Text="{Binding Details.StatusAbbrev}"
           TextColor="{StaticResource PrimaryTextColor}" />
         <Label
-          FontSize="Small"
+          FontSize="Micro"
           HorizontalOptions="Center"
           Text="{Binding Details.StatusName, StringFormat='({0})'}"
           TextColor="{StaticResource PrimaryTextColor}" />
-      </HorizontalStackLayout>
+      </VerticalStackLayout>
 
       <!--  LAUNCH DATE/TIME  -->
       <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">

@@ -7,36 +7,40 @@
     xmlns:utilities="clr-namespace:launchmaui.Utilities"
     xmlns:vm="clr-namespace:launchmaui.VM"
     x:DataType="vm:MainVM"
-    Background="{StaticResource BackgroundGradient}">
+    Background="{StaticResource BackgroundGradient}"
+    Shell.NavBarIsVisible="False">
     <ContentPage.Resources>
         <utilities:GreaterThanZeroConverter x:Key="GreaterThanZeroConverter" />
     </ContentPage.Resources>
     <ScrollView>
-        <VerticalStackLayout Padding="30,0" Spacing="25">
+        <VerticalStackLayout Padding="30,30" Spacing="25">
             <FlexLayout
                 AlignItems="Center"
                 Direction="Row"
                 JustifyContent="SpaceBetween"
                 Wrap="NoWrap">
-                <Button
-                    Margin="5"
-                    Command="{Binding PreviousPageCommand}"
-                    IsEnabled="{Binding HasPreviousPage}"
-                    Text="Previous"
-                    WidthRequest="100" />
-                <Picker
-                    Title="Select Page"
-                    HorizontalOptions="Center"
-                    HorizontalTextAlignment="Center"
-                    ItemsSource="{Binding Pages}"
-                    SelectedItem="{Binding Page, Mode=TwoWay}"
-                    WidthRequest="100" />
-                <Button
-                    Margin="5"
-                    Command="{Binding NextPageCommand}"
-                    IsEnabled="{Binding HasNextPage}"
-                    Text="Next"
-                    WidthRequest="100" />
+
+                <Border Style="{StaticResource BorderMain}">
+                    <Button
+                        Command="{Binding PreviousPageCommand}"
+                        IsEnabled="{Binding HasPreviousPage}"
+                        Text="Previous" />
+                </Border>
+
+                <Border Style="{StaticResource BorderMain}">
+                    <Picker
+                        Title="Select Page"
+                        ItemsSource="{Binding Pages}"
+                        SelectedItem="{Binding Page, Mode=TwoWay}" />
+                </Border>
+
+                <Border Style="{StaticResource BorderMain}">
+                    <Button
+                        Command="{Binding NextPageCommand}"
+                        IsEnabled="{Binding HasNextPage}"
+                        Text="Next" />
+                </Border>
+
             </FlexLayout>
 
             <CollectionView
@@ -46,52 +50,41 @@
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="items:LaunchVM">
                         <Border
-                            Margin="5"
-                            Padding="5"
-                            Background="White"
-                            HeightRequest="125"
-                            Stroke="Black"
-                            StrokeShape="RoundRectangle 10">
+                            Margin="0,25,0,0"
+                            Style="{StaticResource BorderCard}"
+                            WidthRequest="200">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer
                                     Command="{Binding BindingContext.GoToDetailsCommand, Source={RelativeSource AncestorType={x:Type ContentPage}}}"
                                     CommandParameter="{Binding Id}"
                                     NumberOfTapsRequired="1" />
                             </Border.GestureRecognizers>
-                            <VerticalStackLayout>
+                            <VerticalStackLayout Spacing="5">
+                                <Label FontAttributes="Bold" Text="{Binding LspName}" />
                                 <Label
-                                    FontAttributes="Bold"
-                                    FontSize="14"
-                                    Text="{Binding DisplayName}" />
-                                <FlexLayout
-                                    AlignItems="Center"
-                                    Direction="Row"
-                                    JustifyContent="SpaceBetween"
-                                    Wrap="NoWrap">
-                                    <Label
-                                        FontAttributes="Italic"
-                                        FontSize="14"
-                                        Text="{Binding WindowStart}" />
-                                    <Label
-                                        FontAttributes="Bold"
-                                        FontSize="14"
-                                        Text=" - " />
-                                    <Label
-                                        FontAttributes="Italic"
-                                        FontSize="14"
-                                        Text="{Binding WindowEnd}" />
-                                </FlexLayout>
+                                    FontAttributes="Bold,Italic"
+                                    FontSize="10"
+                                    LineBreakMode="TailTruncation"
+                                    Text="{Binding MissionName}" />
+                                <Label FontAttributes="Italic" Text="{Binding Net, StringFormat='{0:MMM dd, yyyy}'}" />
                                 <Grid>
-
-                                    <Image HeightRequest="100" Source="fallback.jpg" />
-                                    <Image
-                                        Aspect="AspectFill"
+                                    <Border
                                         HeightRequest="100"
+                                        StrokeShape="RoundRectangle 100"
                                         WidthRequest="100">
-                                        <Image.Source>
-                                            <UriImageSource Uri="{Binding ImageUrl}" />
-                                        </Image.Source>
-                                    </Image>
+                                        <Image
+                                            Aspect="AspectFit"
+                                            Opacity="0.8"
+                                            Source="{Binding ThumbnailUrl}">
+                                            <Image.Background>
+                                                <RadialGradientBrush Center="0.5,0.5" Radius="1.0">
+                                                    <GradientStop Offset="0.0" Color="#4DA6FF" />
+                                                    <GradientStop Offset="0.2" Color="#204DA6FF" />
+                                                    <GradientStop Offset="1.0" Color="Transparent" />
+                                                </RadialGradientBrush>
+                                            </Image.Background>
+                                        </Image>
+                                    </Border>
                                 </Grid>
                             </VerticalStackLayout>
                         </Border>

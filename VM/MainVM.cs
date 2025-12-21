@@ -2,7 +2,6 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using launchmaui.Utilities;
 using launchmaui.VM.Items;
 using launchapi.Api;
 
@@ -125,7 +124,14 @@ public partial class MainVM : BaseVM
         continue;
       }
 
-      var vm = new LaunchVM(r.LaunchNormal.Id, r.LaunchNormal.Name, r.LaunchNormal.WindowStart, r.LaunchNormal.WindowEnd, r.LaunchNormal.Image?.ThumbnailUrl, LaunchTypes.Basic);
+      var vm = new LaunchVM(
+        r.LaunchNormal.Id,
+        r.LaunchNormal.Mission?.Name,
+        r.LaunchNormal.Net,
+        r.LaunchNormal.Image?.ThumbnailUrl,
+        r.LaunchNormal.LaunchServiceProvider.Name,
+        r.LaunchNormal.LaunchServiceProvider.Abbrev);
+
       vms.Add(vm);
     }
 

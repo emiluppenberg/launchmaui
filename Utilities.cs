@@ -2,11 +2,6 @@ using System.Globalization;
 
 namespace launchmaui.Utilities;
 
-public enum LaunchTypes
-{
-  Basic, Normal, Detailed
-}
-
 public class GreaterThanZeroConverter : IValueConverter
 {
   public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
