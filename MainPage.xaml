@@ -6,7 +6,8 @@
     xmlns:items="clr-namespace:launchmaui.VM.Items"
     xmlns:utilities="clr-namespace:launchmaui.Utilities"
     xmlns:vm="clr-namespace:launchmaui.VM"
-    x:DataType="vm:MainVM">
+    x:DataType="vm:MainVM"
+    Background="{StaticResource BackgroundGradient}">
     <ContentPage.Resources>
         <utilities:GreaterThanZeroConverter x:Key="GreaterThanZeroConverter" />
     </ContentPage.Resources>

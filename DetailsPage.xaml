@@ -4,215 +4,211 @@
   xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
   xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
   xmlns:items="clr-namespace:launchmaui.VM.Items"
+  xmlns:sys="clr-namespace:System;assembly=System.Runtime"
   xmlns:utilities="clr-namespace:launchmaui.Utilities"
   xmlns:vm="clr-namespace:launchmaui.VM"
   Title="{Binding Details.Title}"
-  x:DataType="vm:DetailsVM">
+  x:DataType="vm:DetailsVM"
+  Background="{StaticResource BackgroundGradient}">
 
   <ScrollView>
-    <VerticalStackLayout Padding="20" Spacing="15">
-
-      <!--  Back Button  -->
+    <VerticalStackLayout Padding="10" Spacing="15">
+      <!--  Main Image  -->
       <Border
-        Padding="15,10"
-        HorizontalOptions="Start"
-        Stroke="#0078D7"
-        StrokeShape="RoundRectangle 8"
-        StrokeThickness="1">
-        <Button
-          BackgroundColor="Transparent"
-          Command="{Binding GoToMainCommand}"
-          Text="← Back to Main"
-          TextColor="#0078D7"
-          WidthRequest="120" />
+        HeightRequest="150"
+        StrokeShape="RoundRectangle 100"
+        StrokeThickness="0"
+        WidthRequest="150">
+        <Image
+          Aspect="AspectFill"
+          Opacity="0.8"
+          Source="{Binding Details.RocketThumbnailUrl}">
+          <Image.Background>
+            <RadialGradientBrush Center="0.5,0.5" Radius="1.0">
+              <GradientStop Offset="0.0" Color="#4DA6FF" />
+              <GradientStop Offset="0.2" Color="#204DA6FF" />
+              <GradientStop Offset="1.0" Color="Transparent" />
+            </RadialGradientBrush>
+          </Image.Background>
+        </Image>
       </Border>
 
-      <!--  Main Launch Image  -->
-      <Border
-        Padding="0"
-        HorizontalOptions="Center"
-        Stroke="#E0E0E0"
-        StrokeShape="RoundRectangle 10"
-        StrokeThickness="1">
-        <Grid>
-          <Image
-            Aspect="AspectFill"
-            HeightRequest="200"
-            Source="fallback.jpg"
-            WidthRequest="200" />
-          <Image
-            Aspect="AspectFill"
-            HeightRequest="200"
-            Source="{Binding Details.ThumbnailUrl}"
-            WidthRequest="200" />
-        </Grid>
-      </Border>
+      <FlexLayout
+        Margin="20"
+        AlignItems="Center"
+        Direction="Row"
+        JustifyContent="SpaceBetween"
+        Wrap="NoWrap">
 
-      <!--  Launch Provider  -->
-      <VerticalStackLayout Spacing="8">
+        <!--  MISSION PATCH IMAGE  -->
+        <Border
+          HeightRequest="50"
+          StrokeShape="RoundRectangle 100"
+          WidthRequest="50">
+          <Image
+            Aspect="AspectFill"
+            Opacity="0.8"
+            Source="{Binding Details.MissionPatchesImageUrl[0]}" />
+        </Border>
+
+        <!--  LSP NAME  -->
         <Label
-          Grid.Column="0"
+          FontAttributes="Bold"
+          FontFamily=""
+          FontSize="Title"
+          HorizontalTextAlignment="Center"
+          LineBreakMode="WordWrap"
+          MaximumWidthRequest="200"
+          Text="{Binding Details.LspName}"
+          TextColor="{StaticResource PrimaryTextColor}" />
+
+        <!--  LSP IMAGE  -->
+        <Border
+          HeightRequest="50"
+          StrokeShape="RoundRectangle 100"
+          WidthRequest="50">
+          <Image
+            Aspect="AspectFill"
+            Opacity="0.8"
+            Source="{Binding Details.LspThumbnailUrl}" />
+        </Border>
+      </FlexLayout>
+
+      <!--  STATUS NAME  -->
+      <HorizontalStackLayout>
+        <Label
           FontAttributes="Bold"
           FontSize="Subtitle"
           HorizontalOptions="Center"
-          LineBreakMode="WordWrap"
-          Text="{Binding Details.LspName}"
-          TextColor="#1a237e" />
-        <!--  Provider Logo  -->
-        <Border
-          Grid.Column="1"
-          Margin="0,10"
-          Padding="5"
-          BackgroundColor="White"
+          Text="{Binding Details.StatusAbbrev}"
+          TextColor="{StaticResource PrimaryTextColor}" />
+        <Label
+          FontSize="Small"
           HorizontalOptions="Center"
-          Stroke="#CCCCCC"
-          StrokeShape="RoundRectangle 5"
-          StrokeThickness="1">
-          <Grid>
-            <Image
-              Aspect="AspectFill"
-              HeightRequest="100"
-              Source="fallback.jpg"
-              WidthRequest="100" />
-            <Image
-              Aspect="AspectFit"
-              HeightRequest="100"
-              Source="{Binding Details.LspThumbnailUrl}"
-              WidthRequest="100" />
-          </Grid>
-        </Border>
-      </VerticalStackLayout>
+          Text="{Binding Details.StatusName, StringFormat='({0})'}"
+          TextColor="{StaticResource PrimaryTextColor}" />
+      </HorizontalStackLayout>
 
-      <!--  Mission Section  -->
-      <Border
-        Padding="15"
-        BackgroundColor="#f0f8ff"
-        Stroke="#E0E0E0"
-        StrokeShape="RoundRectangle 8"
-        StrokeThickness="1">
+      <!--  LAUNCH DATE/TIME  -->
+      <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+        <!--  NET  -->
+        <VerticalStackLayout Spacing="2">
+          <Label
+            FontSize="Micro"
+            HorizontalOptions="Center"
+            Text="NET"
+            TextColor="{StaticResource PrimaryTextColor}" />
+          <Label
+            FontAttributes="Bold"
+            FontSize="Small"
+            HorizontalOptions="Center"
+            Text="{Binding Details.Net, StringFormat='{0:MMM dd, yyyy}'}"
+            TextColor="{StaticResource PrimaryTextColor}" />
+          <Label
+            FontSize="Small"
+            HorizontalOptions="Center"
+            Text="{Binding Details.Net, StringFormat='{0:HH:mm}'}"
+            TextColor="{StaticResource PrimaryTextColor}" />
+        </VerticalStackLayout>
+
+        <!--  Window Start  -->
+        <VerticalStackLayout Grid.Column="1" Spacing="2">
+          <Label
+            FontSize="Micro"
+            HorizontalOptions="Center"
+            Text="Window Start"
+            TextColor="{StaticResource PrimaryTextColor}" />
+          <Label
+            FontAttributes="Bold"
+            FontSize="Small"
+            HorizontalOptions="Center"
+            Text="{Binding Details.WindowStart, StringFormat='{0:MMM dd, yyyy}'}"
+            TextColor="{StaticResource PrimaryTextColor}" />
+          <Label
+            FontSize="Small"
+            HorizontalOptions="Center"
+            Text="{Binding Details.WindowStart, StringFormat='{0:HH:mm}'}"
+            TextColor="{StaticResource PrimaryTextColor}" />
+        </VerticalStackLayout>
+
+        <!--  Window End  -->
+        <VerticalStackLayout Grid.Column="2" Spacing="2">
+          <Label
+            FontSize="Micro"
+            HorizontalOptions="Center"
+            Text="Window End"
+            TextColor="{StaticResource PrimaryTextColor}" />
+          <Label
+            FontAttributes="Bold"
+            FontSize="Small"
+            HorizontalOptions="Center"
+            Text="{Binding Details.WindowEnd, StringFormat='{0:MMM dd, yyyy}'}"
+            TextColor="{StaticResource PrimaryTextColor}" />
+          <Label
+            FontSize="Small"
+            HorizontalOptions="Center"
+            Text="{Binding Details.WindowEnd, StringFormat='{0:HH:mm}'}"
+            TextColor="{StaticResource PrimaryTextColor}" />
+        </VerticalStackLayout>
+      </Grid>
+
+      <!--  MISSION  -->
+      <Border Style="{StaticResource BorderCard}">
         <VerticalStackLayout Spacing="8">
           <Label
             FontAttributes="Bold"
             FontSize="Caption"
             Text="MISSION"
-            TextColor="Gray" />
+            TextColor="{StaticResource PrimaryTextColor}" />
           <Label
             FontAttributes="Bold"
-            FontSize="Title"
+            FontSize="Subtitle"
             Text="{Binding Details.MissionName}"
-            TextColor="#1a237e" />
+            TextColor="{StaticResource PrimaryTextColor}" />
           <Label
+            FontAttributes="Italic"
             FontSize="Body"
             LineBreakMode="WordWrap"
             Text="{Binding Details.MissionDescription}"
-            TextColor="#424242" />
+            TextColor="{StaticResource PrimaryTextColor}" />
         </VerticalStackLayout>
       </Border>
 
-      <!--  Status Section  -->
-      <Border
-        Padding="15"
-        BackgroundColor="#fff0f5"
-        Stroke="#E0E0E0"
-        StrokeShape="RoundRectangle 8"
-        StrokeThickness="1">
+      <!--  ROCKET  -->
+      <Border Style="{StaticResource BorderCard}">
         <VerticalStackLayout Spacing="8">
           <Label
             FontAttributes="Bold"
             FontSize="Caption"
-            Text="LAUNCH STATUS"
-            TextColor="Gray" />
+            Text="ROCKET"
+            TextColor="{StaticResource PrimaryTextColor}" />
           <Label
             FontAttributes="Bold"
             FontSize="Subtitle"
-            Text="{Binding Details.StatusName}"
-            TextColor="#880e4f" />
+            Text="{Binding Details.RocketName}"
+            TextColor="{StaticResource PrimaryTextColor}" />
           <Label
-            FontSize="Body"
+            FontAttributes="Italic"
+            FontSize="Small"
             LineBreakMode="WordWrap"
-            Text="{Binding Details.StatusDescription}"
-            TextColor="#424242" />
+            Text="{Binding Details.RocketDescription}"
+            TextColor="{StaticResource PrimaryTextColor}" />
         </VerticalStackLayout>
       </Border>
 
-      <!--  Timeline Section  -->
-      <Border
-        Padding="15"
-        BackgroundColor="#f0fff0"
-        Stroke="#E0E0E0"
-        StrokeShape="RoundRectangle 8"
-        StrokeThickness="1">
+      <!--  TIMELINE  -->
+      <Border Style="{StaticResource BorderCard}">
         <VerticalStackLayout Spacing="10">
           <Label
             FontAttributes="Bold"
             FontSize="Caption"
             Text="LAUNCH TIMELINE"
-            TextColor="Gray" />
+            TextColor="{StaticResource PrimaryTextColor}" />
 
-          <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
-            <!--  NET  -->
-            <VerticalStackLayout Spacing="2">
-              <Label
-                FontSize="Micro"
-                HorizontalOptions="Center"
-                Text="NET"
-                TextColor="Gray" />
-              <Label
-                FontAttributes="Bold"
-                FontSize="Small"
-                HorizontalOptions="Center"
-                Text="{Binding Details.Net, StringFormat='{0:MMM dd, yyyy}'}" />
-              <Label
-                FontSize="Small"
-                HorizontalOptions="Center"
-                Text="{Binding Details.Net, StringFormat='{0:HH:mm}'}" />
-            </VerticalStackLayout>
 
-            <!--  Window Start  -->
-            <VerticalStackLayout Grid.Column="1" Spacing="2">
-              <Label
-                FontSize="Micro"
-                HorizontalOptions="Center"
-                Text="Window Start"
-                TextColor="Gray" />
-              <Label
-                FontAttributes="Bold"
-                FontSize="Small"
-                HorizontalOptions="Center"
-                Text="{Binding Details.WindowStart, StringFormat='{0:MMM dd, yyyy}'}" />
-              <Label
-                FontSize="Small"
-                HorizontalOptions="Center"
-                Text="{Binding Details.WindowStart, StringFormat='{0:HH:mm}'}" />
-            </VerticalStackLayout>
 
-            <!--  Window End  -->
-            <VerticalStackLayout Grid.Column="2" Spacing="2">
-              <Label
-                FontSize="Micro"
-                HorizontalOptions="Center"
-                Text="Window End"
-                TextColor="Gray" />
-              <Label
-                FontAttributes="Bold"
-                FontSize="Small"
-                HorizontalOptions="Center"
-                Text="{Binding Details.WindowEnd, StringFormat='{0:MMM dd, yyyy}'}" />
-              <Label
-                FontSize="Small"
-                HorizontalOptions="Center"
-                Text="{Binding Details.WindowEnd, StringFormat='{0:HH:mm}'}" />
-            </VerticalStackLayout>
-          </Grid>
-
-          <Border
-            Margin="0,10,0,0"
-            Padding="10"
-            BackgroundColor="#FFF3E0"
-            IsVisible="{Binding Details.WeatherConcerns, Converter={x:Static utilities:Converters.StringNotNullOrEmpty}}"
-            Stroke="#FFA726"
-            StrokeShape="RoundRectangle 5"
-            StrokeThickness="1">
+          <!--  WEATHER  -->
+          <Border IsVisible="{Binding Details.WeatherConcerns, Converter={x:Static utilities:Converters.StringNotNullOrEmpty}}" Style="{StaticResource BorderCard}">
             <HorizontalStackLayout Spacing="8">
               <Label FontSize="Body" Text="⚠️" />
               <Label
@@ -225,177 +221,136 @@
         </VerticalStackLayout>
       </Border>
 
-      <!--  Rocket  -->
-      <Border
-        Padding="15"
-        BackgroundColor="#f5f5f5"
-        Stroke="#E0E0E0"
-        StrokeShape="RoundRectangle 8"
-        StrokeThickness="1">
+      <!--  LAUNCH PAD  -->
+      <Border Style="{StaticResource BorderCard}">
         <VerticalStackLayout Spacing="8">
+
           <Label
             FontAttributes="Bold"
             FontSize="Caption"
-            Text="ROCKET"
-            TextColor="Gray" />
+            Text="LAUNCH PAD"
+            TextColor="{StaticResource PrimaryTextColor}" />
+
+          <Border HeightRequest="150" StrokeThickness="0">
+            <FlexLayout
+              AlignItems="Center"
+              Direction="Row"
+              JustifyContent="SpaceBetween">
+
+              <!--  LAUNCH PAD INFO  -->
+              <VerticalStackLayout MaximumWidthRequest="200" Spacing="8">
+                <Label
+                  FontAttributes="Bold"
+                  FontSize="Subtitle"
+                  Text="{Binding Details.PadName}"
+                  TextColor="{StaticResource PrimaryTextColor}" />
+                <Label
+                  FontSize="Small"
+                  Text="{Binding Details.PadLocationName}"
+                  TextColor="{StaticResource PrimaryTextColor}" />
+              </VerticalStackLayout>
+
+              <!--  LAUNCH PAD MAP  -->
+              <Border Style="{StaticResource BorderImage}">
+                <Border.GestureRecognizers>
+                  <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.OpenUrlCommand}" CommandParameter="{Binding Details.PadMapUrl}" />
+                </Border.GestureRecognizers>
+                <Image Aspect="AspectFill" Source="{Binding Details.PadMapImageUrl}" />
+              </Border>
+            </FlexLayout>
+          </Border>
+
+          <!--  LAUNCH PAD DESCRIPTION  -->
           <Label
-            FontAttributes="Bold"
-            FontSize="Subtitle"
-            Text="{Binding Details.RocketName}"
-            TextColor="#1a237e" />
-          <Label
+            FontAttributes="Italic"
             FontSize="Small"
-            LineBreakMode="WordWrap"
-            Text="{Binding Details.RocketDescription}"
-            TextColor="#424242" />
+            IsVisible="{Binding Details.PadLocationDescription, Converter={x:Static utilities:Converters.StringNotNullOrEmpty}}"
+            Text="{Binding Details.PadLocationDescription}"
+            TextColor="{StaticResource PrimaryTextColor}" />
         </VerticalStackLayout>
       </Border>
 
-      <!--  Location Section  -->
-      <Grid ColumnDefinitions="*,*" ColumnSpacing="15">
+      <!--  LANDING PAD  -->
+      <Border Style="{StaticResource BorderCard}">
+        <VerticalStackLayout Spacing="8">
 
-        <!--  Launch Pad  -->
-        <Border
-          Padding="15"
-          BackgroundColor="#fffaf0"
-          Stroke="#E0E0E0"
-          StrokeShape="RoundRectangle 8"
-          StrokeThickness="1">
-          <VerticalStackLayout Spacing="8">
-            <Label
-              FontAttributes="Bold"
-              FontSize="Caption"
-              Text="LAUNCH PAD"
-              TextColor="Gray" />
-            <Label
-              FontAttributes="Bold"
-              FontSize="Subtitle"
-              Text="{Binding Details.PadName}"
-              TextColor="#1a237e" />
-            <Label
-              FontSize="Small"
-              HorizontalOptions="Center"
-              Text="{Binding Details.PadLocationName}"
-              TextColor="#424242" />
+          <Label
+            FontAttributes="Bold"
+            FontSize="Caption"
+            Text="LANDING PAD"
+            TextColor="{StaticResource PrimaryTextColor}" />
 
-            <!--  Pad Map Image  -->
-            <Border
-              Margin="0,10"
-              Padding="5"
-              BackgroundColor="White"
-              HorizontalOptions="Center"
-              Stroke="#CCCCCC"
-              StrokeShape="RoundRectangle 5"
-              StrokeThickness="1">
-              <Grid>
-                <Image
-                  Aspect="AspectFill"
-                  HeightRequest="100"
-                  Source="fallback.jpg"
-                  WidthRequest="100" />
-                <Image
-                  Aspect="AspectFill"
-                  HeightRequest="100"
-                  Source="{Binding Details.PadMapImageUrl}"
-                  WidthRequest="100" />
-              </Grid>
-            </Border>
-          </VerticalStackLayout>
-        </Border>
+          <Border HeightRequest="150" StrokeThickness="0">
+            <FlexLayout
+              AlignItems="Center"
+              Direction="Row"
+              JustifyContent="SpaceBetween">
 
-        <!--  Landing Location  -->
-        <Border
-          Grid.Column="1"
-          Padding="15"
-          BackgroundColor="#fffaf0"
-          Stroke="#E0E0E0"
-          StrokeShape="RoundRectangle 8"
-          StrokeThickness="1">
-          <VerticalStackLayout Spacing="8">
-            <Label
-              FontAttributes="Bold"
-              FontSize="Caption"
-              Text="LANDING LOCATION"
-              TextColor="Gray" />
-            <Label
-              FontAttributes="Bold"
-              FontSize="Subtitle"
-              IsVisible="{Binding Details.LandingName, Converter={x:Static utilities:Converters.StringNotNullOrEmpty}}"
-              Text="{Binding Details.LandingName}"
-              TextColor="#1a237e" />
-            <Label
-              Margin="0,40"
-              FontAttributes="Italic"
-              FontSize="Small"
-              HorizontalOptions="Center"
-              IsVisible="{Binding Details.LandingName, Converter={x:Static utilities:Converters.StringIsNullOrEmpty}}"
-              Text="No landing location specified"
-              TextColor="Gray" />
+              <!--  LANDING PAD NAME  -->
+              <Label
+                FontSize="Small"
+                Text="{Binding Details.LauncherStageLandingLocationName[0]}"
+                TextColor="{StaticResource PrimaryTextColor}" />
 
-            <!--  Landing Location Image  -->
-            <Border
-              Margin="0,10"
-              Padding="5"
-              BackgroundColor="White"
-              HorizontalOptions="Center"
-              IsVisible="{Binding Details.LandingThumbnailUrl, Converter={x:Static utilities:Converters.StringNotNullOrEmpty}}"
-              Stroke="#CCCCCC"
-              StrokeShape="RoundRectangle 5"
-              StrokeThickness="1">
-              <Grid>
-                <Image
-                  Aspect="AspectFill"
-                  HeightRequest="100"
-                  Source="fallback.jpg"
-                  WidthRequest="100" />
-                <Image
-                  Aspect="AspectFill"
-                  HeightRequest="100"
-                  Source="{Binding Details.LandingThumbnailUrl}"
-                  WidthRequest="100" />
-              </Grid>
-            </Border>
-          </VerticalStackLayout>
-        </Border>
-      </Grid>
+              <!--  LANDING PAD IMAGE  -->
+              <Border Style="{StaticResource BorderImage}">
+                <Image Aspect="AspectFill" Source="{Binding Details.LauncherStageLandingLocationImageThumbnailUrl[0]}" />
+              </Border>
+            </FlexLayout>
+          </Border>
+
+          <!--  LANDING PAD DESCRIPTION  -->
+          <Label
+            FontAttributes="Italic"
+            FontSize="Small"
+            IsVisible="{Binding Details.LauncherStageLandingLocationDescription[0], Converter={x:Static utilities:Converters.StringNotNullOrEmpty}}"
+            Text="{Binding Details.LauncherStageLandingLocationDescription[0]}"
+            TextColor="{StaticResource PrimaryTextColor}" />
+        </VerticalStackLayout>
+      </Border>
 
       <!--  Additional Info Section  -->
-      <Border
-        Padding="15"
-        BackgroundColor="#f8f8f8"
-        IsVisible="{Binding Details.Url, Converter={x:Static utilities:Converters.StringNotNullOrEmpty}}"
-        Stroke="#E0E0E0"
-        StrokeShape="RoundRectangle 8"
-        StrokeThickness="1">
-        <HorizontalStackLayout HorizontalOptions="Center">
-          <VerticalStackLayout Spacing="8">
-            <Label
-              FontAttributes="Bold"
-              FontSize="Caption"
-              Text="ADDITIONAL INFORMATION"
-              TextColor="Gray" />
+      <Border Style="{StaticResource BorderCard}">
+        <VerticalStackLayout HorizontalOptions="Center" Spacing="8">
+          <Label
+            FontAttributes="Bold"
+            FontSize="Caption"
+            Text="ADDITIONAL INFORMATION"
+            TextColor="{StaticResource PrimaryTextColor}" />
 
-            <Border
-              Padding="8,5"
-              BackgroundColor="#E3F2FD"
-              Stroke="#0078D7"
-              StrokeShape="RoundRectangle 5"
-              StrokeThickness="1">
-              <Label
-                FontAttributes="Bold"
-                FontSize="Small"
-                IsVisible="{Binding Details.Url, Converter={x:Static utilities:Converters.StringNotNullOrEmpty}}"
-                Text="Open Source Link"
-                TextColor="#0078D7">
-                <Label.GestureRecognizers>
-                  <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.OpenUrlCommand}" CommandParameter="{Binding Details.Url}" />
-                </Label.GestureRecognizers>
-              </Label>
-            </Border>
-          </VerticalStackLayout>
-        </HorizontalStackLayout>
+          <!--  LSP WEBSITE  -->
+          <Border Padding="8" Style="{StaticResource BorderCard}">
+            <Label
+              IsEnabled="{Binding Details.LspUrl, Converter={x:Static utilities:Converters.StringNotNullOrEmpty}}"
+              Style="{StaticResource LinkLabel}"
+              Text="{Binding Details.LspName, StringFormat='Visit {0} website'}">
+              <Label.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.OpenUrlCommand}" CommandParameter="{Binding Details.LspUrl}" />
+              </Label.GestureRecognizers>
+            </Label>
+          </Border>
+
+          <!--  INFOURLS  -->
+          <CollectionView ItemsSource="{Binding Details.InfoUrlsUrl}" ItemsUpdatingScrollMode="KeepItemsInView">
+            <CollectionView.ItemTemplate>
+              <DataTemplate x:DataType="sys:String">
+                <Border Padding="8" Style="{StaticResource BorderCard}">
+                  <Label
+                    IsEnabled="{Binding ., Converter={x:Static utilities:Converters.StringNotNullOrEmpty}}"
+                    Style="{StaticResource LinkLabel}"
+                    Text="{Binding .}">
+                    <Label.GestureRecognizers>
+                      <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.OpenUrlCommand}" CommandParameter="{Binding Details.Url}" />
+                    </Label.GestureRecognizers>
+                  </Label>
+                </Border>
+              </DataTemplate>
+            </CollectionView.ItemTemplate>
+          </CollectionView>
+        </VerticalStackLayout>
       </Border>
 
     </VerticalStackLayout>
   </ScrollView>
+
 </ContentPage>
