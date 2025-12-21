@@ -3,9 +3,20 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using CommunityToolkit.Mvvm.ComponentModel;
-using launchapi.Model;
 
 namespace launchmaui.VM.Items;
+
+public partial class TimelineVM : BaseVM
+{
+	[ObservableProperty]
+	public string? relativeTime;
+
+	[ObservableProperty]
+	public string? typeAbbrev;
+
+	[ObservableProperty]
+	public string? typeDescription;
+}
 
 public partial class LaunchDetailsVM : BaseVM
 {
@@ -100,13 +111,7 @@ public partial class LaunchDetailsVM : BaseVM
 	string?[]? infoUrlsUrl;
 
 	[ObservableProperty]
-	string?[]? timelineRelativeTime;
-
-	[ObservableProperty]
-	string?[]? timelineTypeDescription;
-
-	[ObservableProperty]
-	string?[]? timelineTypeAbbrev;
+	TimelineVM[]? timeline;
 
 	[ObservableProperty]
 	string?[]? missionPatchesImageUrl;
@@ -204,11 +209,11 @@ public partial class LaunchDetailsVM : BaseVM
 				if (reader.TokenType == JsonTokenType.EndObject && isArray)
 				{
 					var last = arrayCurrentParents.LastOrDefault();
-					var lastIndex = arrayCurrentParents.IndexOf(last);
+					var lastLength = last.Value.Count() - 1;
 
-					if (last.Value.IndexOf(last.Key) >= lastIndex)
+					if (lastLength > last.Value.IndexOf(last.Key))
 					{
-						last.Value.RemoveAt(last.Value.Count() - 1);
+						last.Value.RemoveAt(lastLength);
 					}
 
 					continue;
@@ -368,6 +373,8 @@ public partial class LaunchDetailsVM : BaseVM
 			var timelineTypeAbbrev = new List<string?>();
 			var missionPatchesImageUrl = new List<string?>();
 
+			var _timeline = new List<TimelineVM>();
+
 			if (model.TryGetValue("RocketLauncherStage", out var launcherStage))
 			{
 				if (launcherStage.TryGetValue("LandingLocationName", out var landingLocationName))
@@ -429,6 +436,16 @@ public partial class LaunchDetailsVM : BaseVM
 				{
 					CastToList<string?>(timelineTypeAbbrev, typeAbbrev as List<object?>);
 				}
+
+				for (int i = 0; i < timelineRelativeTime.Count - 1; i++)
+				{
+					_timeline.Add(new Items.TimelineVM
+					{
+						RelativeTime = timelineRelativeTime[i],
+						TypeAbbrev = timelineTypeAbbrev[i],
+						TypeDescription = timelineTypeDescription[i]
+					});
+				}
 			}
 
 			if (model.TryGetValue("ModelMissionPatches", out var missionPatches))
@@ -460,17 +477,14 @@ public partial class LaunchDetailsVM : BaseVM
 				LauncherStageLauncherLastLaunchDate = launcherStageLauncherLastLaunchDate.Count > 0 ?
 					launcherStageLauncherLastLaunchDate.ToArray() : null,
 
+				LauncherStageLauncherDetails = launcherStageLauncherDetails.Count > 0 ?
+					launcherStageLauncherDetails.ToArray() : null,
+
 				InfoUrlsUrl = infoUrlsUrl.Count > 0 ?
 					infoUrlsUrl.ToArray() : null,
 
-				TimelineRelativeTime = timelineRelativeTime.Count > 0 ?
-					timelineRelativeTime.ToArray() : null,
-
-				TimelineTypeDescription = timelineTypeDescription.Count > 0 ?
-					timelineTypeDescription.ToArray() : null,
-
-				TimelineTypeAbbrev = timelineTypeAbbrev.Count > 0 ?
-					timelineTypeAbbrev.ToArray() : null,
+				Timeline = _timeline.Count > 0 ?
+					_timeline.ToArray() : null,
 
 				MissionPatchesImageUrl = missionPatchesImageUrl.Count > 0 ?
 					missionPatchesImageUrl.ToArray() : ["fallback.jpg"],

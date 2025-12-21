@@ -88,6 +88,17 @@
           HorizontalOptions="Center"
           Text="{Binding Details.StatusName, StringFormat='({0})'}"
           TextColor="{StaticResource PrimaryTextColor}" />
+        <!--  WEATHER  -->
+        <Border IsVisible="{Binding Details.WeatherConcerns, Converter={x:Static utilities:Converters.StringNotNullOrEmpty}}" Style="{StaticResource BorderCard}">
+          <HorizontalStackLayout Spacing="8">
+            <Label FontSize="Body" Text="⚠️" />
+            <Label
+              FontSize="Small"
+              LineBreakMode="WordWrap"
+              Text="{Binding Details.WeatherConcerns}"
+              TextColor="#E65100" />
+          </HorizontalStackLayout>
+        </Border>
       </VerticalStackLayout>
 
       <!--  LAUNCH DATE/TIME  -->
@@ -178,6 +189,7 @@
       <!--  ROCKET  -->
       <Border Style="{StaticResource BorderCard}">
         <VerticalStackLayout Spacing="8">
+
           <Label
             FontAttributes="Bold"
             FontSize="Caption"
@@ -194,6 +206,41 @@
             LineBreakMode="WordWrap"
             Text="{Binding Details.RocketDescription}"
             TextColor="{StaticResource PrimaryTextColor}" />
+
+          <FlexLayout
+            AlignItems="Center"
+            Direction="Row"
+            JustifyContent="SpaceBetween"
+            Wrap="NoWrap">
+            <Label
+              FontAttributes="Bold"
+              FontSize="Small"
+              HorizontalOptions="Center"
+              IsVisible="{Binding Details.LauncherStageLauncherFlightNumber[0], Converter={x:Static utilities:Converters.GreaterThanZero}}"
+              Text="{Binding Details.LauncherStageLauncherFlightNumber[0], StringFormat='Flight number: {0}'}"
+              TextColor="{StaticResource PrimaryTextColor}" />
+            <Label
+              FontAttributes="Bold"
+              FontSize="Small"
+              HorizontalOptions="Center"
+              IsVisible="{Binding Details.LauncherStageLauncherFirstLaunchDate[0], Converter={x:Static utilities:Converters.StringNotNullOrEmpty}}"
+              Text="{Binding Details.LauncherStageLauncherFirstLaunchDate[0], StringFormat='{0:MMM dd, yyyy}'}"
+              TextColor="{StaticResource PrimaryTextColor}" />
+            <Label
+              FontAttributes="Bold"
+              FontSize="Small"
+              HorizontalOptions="Center"
+              IsVisible="{Binding Details.LauncherStageLauncherLastLaunchDate[0], Converter={x:Static utilities:Converters.StringNotNullOrEmpty}}"
+              Text="{Binding Details.LauncherStageLauncherLastLaunchDate[0], StringFormat='{0:MMM dd, yyyy}'}"
+              TextColor="{StaticResource PrimaryTextColor}" />
+          </FlexLayout>
+          <Label
+            FontAttributes="Italic"
+            FontSize="Small"
+            IsVisible="{Binding Details.LauncherStageLauncherDetails[0], Converter={x:Static utilities:Converters.StringNotNullOrEmpty}}"
+            LineBreakMode="WordWrap"
+            Text="{Binding Details.LauncherStageLauncherDetails[0]}"
+            TextColor="{StaticResource PrimaryTextColor}" />
         </VerticalStackLayout>
       </Border>
 
@@ -203,22 +250,36 @@
           <Label
             FontAttributes="Bold"
             FontSize="Caption"
-            Text="LAUNCH TIMELINE"
+            Text="TIMELINE"
             TextColor="{StaticResource PrimaryTextColor}" />
 
+          <CollectionView ItemsSource="{Binding Details.Timeline}" ItemsUpdatingScrollMode="KeepItemsInView">
+            <CollectionView.ItemTemplate>
+              <DataTemplate x:DataType="items:TimelineVM">
+                <VerticalStackLayout>
+                  <Grid Margin="0,20,0,5" ColumnDefinitions="*,*,*,*,*">
+                    <Label
+                      Grid.Column="1"
+                      Grid.ColumnSpan="2"
+                      Margin="10,0"
+                      FontAttributes="Bold"
+                      HorizontalTextAlignment="Start"
+                      Text="{Binding TypeAbbrev}"
+                      VerticalOptions="Center" />
+                    <Label
+                      Grid.Column="3"
+                      Grid.ColumnSpan="2"
+                      FontAttributes="Bold"
+                      HorizontalTextAlignment="Start"
+                      Text="{Binding RelativeTime}"
+                      VerticalOptions="Center" />
+                  </Grid>
+                  <Label FontAttributes="Bold,Italic" Text="{Binding TypeDescription}" />
+                </VerticalStackLayout>
+              </DataTemplate>
+            </CollectionView.ItemTemplate>
 
-
-          <!--  WEATHER  -->
-          <Border IsVisible="{Binding Details.WeatherConcerns, Converter={x:Static utilities:Converters.StringNotNullOrEmpty}}" Style="{StaticResource BorderCard}">
-            <HorizontalStackLayout Spacing="8">
-              <Label FontSize="Body" Text="⚠️" />
-              <Label
-                FontSize="Small"
-                LineBreakMode="WordWrap"
-                Text="{Binding Details.WeatherConcerns}"
-                TextColor="#E65100" />
-            </HorizontalStackLayout>
-          </Border>
+          </CollectionView>
         </VerticalStackLayout>
       </Border>
 

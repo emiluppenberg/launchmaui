@@ -45,5 +45,5 @@ public class Converters
 {
   public static IValueConverter StringNotNullOrEmpty => new StringNotNullOrEmptyConverter();
   public static IValueConverter StringIsNullOrEmpty => new StringIsNullOrEmptyConverter();
-  public static IValueConverter GreaterThanZeroConverter => new GreaterThanZeroConverter();
+  public static IValueConverter GreaterThanZero => new GreaterThanZeroConverter();
 }

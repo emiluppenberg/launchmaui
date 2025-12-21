@@ -9,9 +9,6 @@
     x:DataType="vm:MainVM"
     Background="{StaticResource BackgroundGradient}"
     Shell.NavBarIsVisible="False">
-    <ContentPage.Resources>
-        <utilities:GreaterThanZeroConverter x:Key="GreaterThanZeroConverter" />
-    </ContentPage.Resources>
     <ScrollView>
         <VerticalStackLayout Padding="30,30" Spacing="25">
             <FlexLayout
