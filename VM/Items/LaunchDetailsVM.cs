@@ -322,8 +322,6 @@ public partial class LaunchDetailsVM : BaseVM
 							currentLevel.Value[currentLevel.Value.IndexOf(currentLevel.Key) - 1] + currentLevel.Key;
 					}
 
-					Debug.WriteLine($"{currentObject}.{currentProperty} - {value}");
-
 					if (!isArray)
 					{
 						if (!model.ContainsKey(currentObject))
@@ -357,6 +355,14 @@ public partial class LaunchDetailsVM : BaseVM
 							}
 						}
 					}
+				}
+			}
+
+			foreach (var k in model.Keys)
+			{
+				foreach (var kvp in model[k])
+				{
+					Debug.WriteLine($"{k}.{kvp.Key} - {kvp.Value}");
 				}
 			}
 
@@ -456,14 +462,13 @@ public partial class LaunchDetailsVM : BaseVM
 				}
 			}
 
-
 			return new LaunchDetailsVM
 			{
 				LauncherStageLandingLocationName = launcherStageLandingLocationName.Count > 0 ?
-					launcherStageLandingLocationName.ToArray() : null,
+					launcherStageLandingLocationName.ToArray() : ["No landing location name provided"],
 
 				LauncherStageLandingLocationDescription = launcherStageLandingLocationDescription.Count > 0 ?
-					launcherStageLandingLocationDescription.ToArray() : null,
+					launcherStageLandingLocationDescription.ToArray() : ["No landing location description provided"],
 
 				LauncherStageLandingLocationImageThumbnailUrl = launcherStageLandingLocationImageThumbnailUrl.Count > 0 ?
 					launcherStageLandingLocationImageThumbnailUrl.ToArray() : ["fallback.jpg"],
@@ -478,7 +483,7 @@ public partial class LaunchDetailsVM : BaseVM
 					launcherStageLauncherLastLaunchDate.ToArray() : null,
 
 				LauncherStageLauncherDetails = launcherStageLauncherDetails.Count > 0 ?
-					launcherStageLauncherDetails.ToArray() : null,
+					launcherStageLauncherDetails.ToArray() : ["No launcher stage details provided"],
 
 				InfoUrlsUrl = infoUrlsUrl.Count > 0 ?
 					infoUrlsUrl.ToArray() : null,
@@ -490,17 +495,17 @@ public partial class LaunchDetailsVM : BaseVM
 					missionPatchesImageUrl.ToArray() : ["fallback.jpg"],
 
 				LspName = model.TryGetValue("ModelLaunchServiceProvider", out var lsp)
-						&& lsp.TryGetValue("Name", out var lspName)
-						? (string?)lspName
-						: null,
+						&& lsp.TryGetValue("Name", out var lspName) && lspName is string _lspName
+						? _lspName
+						: "No LSP name provided",
 
 				LspUrl = lsp is not null && lsp.TryGetValue("Url", out var lspUrl)
 						? (string?)lspUrl
 						: null,
 
 				LspThumbnailUrl = model.TryGetValue("LaunchServiceProviderSocialLogo", out var socialLogo)
-					&& socialLogo.TryGetValue("ThumbnailUrl", out var lspThumbnailUrl)
-					? (string?)lspThumbnailUrl
+					&& socialLogo.TryGetValue("ThumbnailUrl", out var lspThumbnailUrl) && lspThumbnailUrl is string _lspThumbnailUrl
+					? _lspThumbnailUrl
 					: "fallback.jpg",
 
 				MissionDescription = model.TryGetValue("ModelMission", out var mission)
@@ -544,8 +549,8 @@ public partial class LaunchDetailsVM : BaseVM
 					: null,
 
 				RocketThumbnailUrl = model.TryGetValue("ConfigurationImage", out var configurationImage)
-					&& configurationImage.TryGetValue("ThumbnailUrl", out var configurationThumbnailUrl)
-					? (string?)configurationThumbnailUrl
+					&& configurationImage.TryGetValue("ThumbnailUrl", out var configurationThumbnailUrl) && configurationThumbnailUrl is string _configurationThumbnailUrl
+					? _configurationThumbnailUrl
 					: "fallback.jpg",
 
 				StatusDescription = model.TryGetValue("ModelStatus", out var status)
@@ -560,11 +565,6 @@ public partial class LaunchDetailsVM : BaseVM
 				StatusName = status is not null && status.TryGetValue("Name", out var statusName)
 					? (string?)statusName
 					: null,
-
-				// ThumbnailUrl = model.TryGetValue("ModelImage", out var imageModel)
-				// 	&& imageModel.TryGetValue("ThumbnailUrl", out var thumbnailUrl)
-				// 	? (string?)thumbnailUrl
-				// 	: null,
 
 				Url = model["Model"].TryGetValue("Url", out var url)
 					? (string?)url

@@ -253,6 +253,11 @@
             Text="TIMELINE"
             TextColor="{StaticResource PrimaryTextColor}" />
 
+          <Label
+            FontAttributes="Italic"
+            IsVisible="{Binding Details.Timeline, Converter={x:Static utilities:Converters.ArrayIsNullOrEmpty}}"
+            Text="No timeline provided" />
+          <!--    -->
           <CollectionView ItemsSource="{Binding Details.Timeline}" ItemsUpdatingScrollMode="KeepItemsInView">
             <CollectionView.ItemTemplate>
               <DataTemplate x:DataType="items:TimelineVM">
@@ -278,7 +283,6 @@
                 </VerticalStackLayout>
               </DataTemplate>
             </CollectionView.ItemTemplate>
-
           </CollectionView>
         </VerticalStackLayout>
       </Border>
